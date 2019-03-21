@@ -14,14 +14,14 @@ print Y_train.shape
 print Y_test.shape
 
 np.save('x_test_f32.npy', X_test)
-np.save('y_test_f32.npy', Y_test
+np.save('y_test_f32.npy', Y_test)
 
 #-----------------------------------------------------
 import numpy as np
 data = np.load('y_train.npy', mmap_mode="r")
 first_slice = data[0:176,:,:]
 print first_slice.shape
-np.save('y_train_1sub.npy', first_slice
+np.save('y_train_1sub.npy', first_slice)
 
 #------------------------------------------------------
 import numpy as np

@@ -22,13 +22,14 @@ for subjects in case_arr:
 	img = nib.load(subjects)
 	print img.shape
 	data = img.get_data()
-	arr3d = data.reshape(x_dim, y_dim, z_dim)/255
+	data[data>0]=1
+	arr3d = data.reshape(x_dim, y_dim, z_dim)
 	arr3d.tofile(f_handle)
 	print 'Case ' + str(count) + ' done'
 	count = count + 1
 f_handle.close()
 
-merge = np.memmap(binary_file, dtype=np.float64, mode='r', shape=(x_dim*total_case, y_dim, z_dim))
+merge = np.memmap(binary_file, dtype=np.uint8, mode='r+', shape=(x_dim*total_case, y_dim, z_dim))
 print merge.shape
 print type(merge)
 

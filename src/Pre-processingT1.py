@@ -3,10 +3,11 @@ import os
 import sys
 import numpy as np
 import nibabel as nib
+import cv2 as cv
 
-cases = 'caselist.txt'
+cases = 'case.txt'
 binary_file = 'output/binary'
-training_data='output/X_train.npy'
+training_data='output/data.npy'
 
 with open(cases) as f:
     case_arr = f.read().splitlines()
@@ -19,16 +20,18 @@ count=0
 
 f_handle = open(binary_file, 'wb')
 for subjects in case_arr:
-	img = nib.load(subjects)
-	data = img.get_data()
-	arr3d = data.reshape(x_dim, y_dim, z_dim)/255
-	arr3d.tofile(f_handle)
-	print 'Case ' + str(count) + 'done'
-	count = count + 1
+    img = nib.load(subjects)
+    imgU16 = img.get_data().astype(np.int16)    # Signed 16-bit Integer (-32768 to 32767)
+    imgU16 = imgU16.reshape(x_dim, y_dim, z_dim)
+    data = imgU16 / 32767.0
+    data.tofile(f_handle)
+    print 'Case ' + str(count) + ' done'
+    count = count + 1
 f_handle.close()
 
-merge = np.memmap(binary_file, dtype=np.float64, mode='r', shape=(x_dim*total_case, y_dim, z_dim))
+merge = np.memmap(binary_file, dtype=np.float64, mode='r+', shape=(x_dim*total_case, y_dim, z_dim))
 print merge.shape
 print type(merge)
 
 np.save(training_data, merge)
+	

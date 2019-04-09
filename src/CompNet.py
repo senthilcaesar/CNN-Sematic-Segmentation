@@ -2424,8 +2424,8 @@ def CompNet(input_shape, learn_rate=1e-3):
 
 #-------------------------------Main------------------------------------------------#
 
-train_x = '../data/data.npy'
-train_y = '../data/label.npy'
+train_x = '../data/case1_data.npy'
+train_y = '../data/case1_label.npy'
 
 model=CompNet(input_shape=(208,176,1))
 print(model.summary())
@@ -2436,19 +2436,19 @@ y_train = np.load(train_y)
 x_train=x_train.reshape(x_train.shape+(1,))
 y_train=y_train.reshape(y_train.shape+(1,))
 
-
-csv_logger = CSVLogger('log.csv', append=True, separator=';')
+# Log output
+csv_logger = CSVLogger('HCPlog.csv', append=True, separator=';')
 
 # Trains the model for a given number of epochs (iterations on a dataset).
-model.fit([x_train], [y_train,y_train,y_train,y_train,y_train,y_train,y_train,y_train,y_train,y_train,y_train,y_train,x_train,x_train,x_train,x_train,x_train,x_train], batch_size=4, epochs=10,shuffle=True)
-
+history_callback = model.fit([x_train], [y_train,y_train,y_train,y_train,y_train,y_train,y_train,y_train,
+                      y_train,y_train,y_train,y_train,x_train,x_train,x_train,x_train,x_train,x_train],
+                        batch_size=1, epochs=1,shuffle=True, callbacks=[csv_logger])
 
 import h5py
 # serialize model to JSON
 model_json = model.to_json()
-with open("../model/CompNetmodel_arch_new.json", "w") as json_file:
+with open("../model/CompNetmodel_arch_HCP.json", "w") as json_file:
     json_file.write(model_json)
 # serialize weights to HDF5
-model.save_weights("../model/CompNetmodel_weights_new.h5")
+model.save_weights("../model/CompNetmodel_weights_HCP.h5")
 print("Saved model to disk")
-

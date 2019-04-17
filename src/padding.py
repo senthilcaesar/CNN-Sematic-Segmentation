@@ -17,7 +17,7 @@ for subject in case_arr:
     img_dwi = dwi_load.get_data().astype(np.int16)
     img_mask = mask_load.get_data().astype(np.float32)
     
-    #result_dwi = np.zeros((144,144,96))
+    result_dwi = np.zeros((144,144,96))
     result_mask = np.zeros((144,144,96))
     
     result_dwi[:img_dwi.shape[0],:img_dwi.shape[1],:img_dwi.shape[2]] = img_dwi

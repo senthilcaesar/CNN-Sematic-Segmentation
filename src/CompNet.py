@@ -15,7 +15,7 @@ from keras.callbacks import CSVLogger
 from keras import regularizers
 from keras import backend as K
 from keras.optimizers import Adam
-from keras.callbacks import ModelCheckpoint
+#from keras.callbacks import ModelCheckpoint
 import nibabel as nib
 
 # Dice coefficient
@@ -728,6 +728,10 @@ def CompNet(input_shape, learn_rate=1e-3):
                     kernel_regularizer=regularizers.l2(l2_lambda))(merge19)
     conv6u = bn()(conv6u)
 
+    
+    print keras.backend.shape(conv6u)
+    print keras.backend.shape(conv3u)
+    
     up7 = concatenate([Conv2DTranspose(12, (2, 2), strides=(2, 2), padding='same')(conv6u), conv3u], name='up7', axis=3)
 
     up7 = Dropout(DropP)(up7)
@@ -2424,10 +2428,11 @@ def CompNet(input_shape, learn_rate=1e-3):
 
 #-------------------------------Main------------------------------------------------#
 
-train_x = '../data/case1_data.npy'
-train_y = '../data/case1_label.npy'
+train_x = '../data/train/x_train_99.npy'
+train_y = '../data/train/y_train_99.npy'
 
-model=CompNet(input_shape=(208,176,1))
+
+model=CompNet(input_shape=(256,256,1))
 print(model.summary())
 
 x_train = np.load(train_x)
@@ -2436,19 +2441,30 @@ y_train = np.load(train_y)
 x_train=x_train.reshape(x_train.shape+(1,))
 y_train=y_train.reshape(y_train.shape+(1,))
 
+
+#x_train = x_train[0:100,:,:,:]
+#y_train = y_train[0:100,:,:,:]
+
 # Log output
-csv_logger = CSVLogger('HCPlog.csv', append=True, separator=';')
+print x_train.shape
+print y_train.shape
+
+# Log output
+csv_logger = CSVLogger('99.csv', append=True, separator=';')
+# checkpoint
+filepath="weights-improvement-{epoch:02d}.h5"
+checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=0, save_best_only=False, save_weights_only=True)
 
 # Trains the model for a given number of epochs (iterations on a dataset).
 history_callback = model.fit([x_train], [y_train,y_train,y_train,y_train,y_train,y_train,y_train,y_train,
-                      y_train,y_train,y_train,y_train,x_train,x_train,x_train,x_train,x_train,x_train],
-                        batch_size=1, epochs=1,shuffle=True, callbacks=[csv_logger])
+                      y_train,y_train,y_train,y_train,x_train,x_train,x_train,x_train,x_train,x_train], validation_split=0.2,
+                        batch_size=4, epochs=15,shuffle=True, callbacks=[csv_logger, checkpoint])
 
 import h5py
 # serialize model to JSON
 model_json = model.to_json()
-with open("../model/CompNetmodel_arch_HCP.json", "w") as json_file:
+with open("../model/CompNetmodel_arch_DWI_percentile_99.json", "w") as json_file:
     json_file.write(model_json)
 # serialize weights to HDF5
-model.save_weights("../model/CompNetmodel_weights_HCP.h5")
+model.save_weights("../model/CompNetmodel_weights_DWI_percentile_99.h5")
 print("Saved model to disk")

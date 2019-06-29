@@ -7,8 +7,9 @@ CompNet: Complementary Segmentation Network for Brain MRI Extraction. To view th
 5) percentile.py
 6) 3dPadding.py
 7) merge.py
-8) gaussianBlur.py
-9) rotate.py
-10) predict.py
-11) split_so.py
-12) view.py
+8) shuffle.py
+9) gaussianBlur.py
+10) rotate.py
+11) predict.py
+12) split_so.py
+13) view.py

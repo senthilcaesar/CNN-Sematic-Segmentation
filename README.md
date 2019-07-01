@@ -1,6 +1,6 @@
 CompNet: Complementary Segmentation Network for Brain MRI Extraction. To view the paper on Archive click the following https://arxiv.org/abs/1804.00521
 
-![Screenshot](CompNet Arch.png)
+![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/CompNet%20Arch.png)
 
 1) permute.sh
 2) extract_b0.sh

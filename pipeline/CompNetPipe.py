@@ -20,8 +20,10 @@ CompNet.py
 10) Cleaning
 '''
 
-import re
 import os
+#os.environ["CUDA_VISIBLE_DEVICES"]="-1"    
+#import tensorflow as tf
+import re
 import sys
 import argparse
 import os.path
@@ -35,9 +37,7 @@ from keras.models import model_from_json
 import cv2
 import numpy as np
 import sys
-#os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
-#os.environ["CUDA_VISIBLE_DEVICES"] = ""
-#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # suppress tensorflow message
 import keras
 import scipy as sp
@@ -47,7 +47,8 @@ import os
 from keras import losses
 import tensorflow as tf
 from keras.models import Model
-from keras.layers import Input,merge, concatenate, Conv2D, MaxPooling2D, Activation, UpSampling2D,Dropout,Conv2DTranspose,add,multiply
+from keras.layers import Input,merge, concatenate, Conv2D, MaxPooling2D,\
+    Activation, UpSampling2D,Dropout,Conv2DTranspose,add,multiply
 from keras.layers.normalization import BatchNormalization as bn
 from keras.callbacks import ModelCheckpoint, TensorBoard
 from keras.optimizers import RMSprop
@@ -75,6 +76,7 @@ suffix_nrrd     = "nrrd"
 suffix_nhdr     = "nhdr"
 suffix_npy      = "npy"
 suffix_txt      = "txt"
+
 
 def predict_mask(input_file):
     '''
@@ -125,7 +127,10 @@ def predict_mask(input_file):
                         'xxoutput1': 'mse', 'xxoutput2': 'mse', 'xxoutput3': 'mse', 'xxoutput4': 'mse',
                         'xxconv10': 'mse', 'xxfinal_op': 'mse'})
 
-    output_file = input_file[:len(input_file) - (len(suffix_nifti_gz)+1)] + '-mask.npy'
+   
+    case_name       = os.path.basename(input_file)
+    output_name     = case_name[:len(case_name) - (len(suffix_nifti_gz)+1)] + '-mask.npy'
+    output_file     = os.path.join(os.path.dirname(input_file), output_name)
 
     if input_file.endswith(suffix_nifti_gz):
         x_test      = nib.load(input_file).get_data()
@@ -138,6 +143,7 @@ def predict_mask(input_file):
     
     np.save(output_file, SO)
     return output_file
+
 
 def check_gradient(Nhdr_file):
     '''
@@ -169,6 +175,7 @@ def check_gradient(Nhdr_file):
     else:
         print "Gradient check passed, " , input_file
 
+
 def resample(nii_file, dim1):
     '''
     Parameters
@@ -184,11 +191,15 @@ def resample(nii_file, dim1):
                   linear interpolated filename which is stored in disk in *.nii.gz format
     '''
     print "Performing linear interpolation"
+    
     input_file           = nii_file
-    output_file          = input_file[:len(input_file) - (len(suffix_nifti_gz)+1)] + '-linear.nii.gz'
+    case_name            = os.path.basename(input_file)
+    output_name          = case_name[:len(case_name) - (len(suffix_nifti_gz)+1)] + '-linear.nii.gz'
+    output_file          = os.path.join(os.path.dirname(input_file), output_name)
     bashCommand_resample = "ResampleImage 3 " + input_file + " " + output_file + " " + dim1 + "x246x246 1"
     output2              = subprocess.check_output(bashCommand_resample, shell=True)
     return output_file
+
 
 def get_dimension(nii_file):
     '''
@@ -218,6 +229,7 @@ def get_dimension(nii_file):
     dimensions            = (dim1, dim2, dim3)
     return dimensions
 
+
 def extract_b0(Nhdr_file):
     '''
     Parameters
@@ -233,10 +245,13 @@ def extract_b0(Nhdr_file):
     '''
     print "Extracting b0"
     input_file  = Nhdr_file
-    output_file = 'dwib0_' + Nhdr_file
+    case_name   = os.path.basename(input_file)
+    output_name = 'dwib0_' + case_name
+    output_file = os.path.join(os.path.dirname(input_file), output_name)
     bashCommand = 'bse.sh -i ' + input_file + ' -o ' + output_file + ' &>/dev/null'
     output      = subprocess.check_output(bashCommand, shell=True)
     return output_file
+
 
 def nhdr_to_nifti(Nhdr_file):
     '''
@@ -253,11 +268,14 @@ def nhdr_to_nifti(Nhdr_file):
     '''
     print "Converting nhdr to nifti"
     input_file    = Nhdr_file
-    output_file   = input_file[:len(input_file) - len(suffix_nhdr)] + 'nii.gz'
+    case_name     = os.path.basename(input_file)
+    output_name   = case_name[:len(case_name) - len(suffix_nhdr)] + 'nii.gz'
+    output_file   = os.path.join(os.path.dirname(input_file), output_name)
     bashCommand   = 'ConvertBetweenFileFormats ' + input_file + " " + output_file
     process       = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
     return output_file
+
 
 def normalize(b0_resampled):
     '''
@@ -272,8 +290,11 @@ def normalize(b0_resampled):
                   Normalized by 99th percentile filename which is stored in disk
     '''
     print "Normalizing input data"
+    
     input_file      = b0_resampled
-    output_file     = input_file[:len(input_file) - (len(suffix_nifti_gz)+1)] + '-normalized.nii.gz'
+    case_name       = os.path.basename(input_file)
+    output_name     = case_name[:len(case_name) - (len(suffix_nifti_gz)+1)] + '-normalized.nii.gz'
+    output_file     = os.path.join(os.path.dirname(input_file), output_name)
     img             = nib.load(b0_resampled)
     imgU16          = img.get_data().astype(np.float64)
     p               = np.percentile(imgU16, 99)
@@ -285,6 +306,7 @@ def normalize(b0_resampled):
     image_dwi       = nib.Nifti1Image(image, img.affine, img.header)
     nib.save(image_dwi, output_file)
     return output_file
+
 
 def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim):
 
@@ -310,7 +332,7 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim):
                           str  (single brain mask filename which is stored in disk in *.nhdr format)
                           list (list of brain mask for all cases which is stored in disk in *.nhdr format)
     '''
-    if len(b0_normalized_cases) > 1:
+    if len(b0_normalized_cases) > 1000000:
         output_mask = []
         for i in range(0, len(b0_normalized_cases)):
             image_space            = nib.load(b0_normalized_cases[i])
@@ -319,7 +341,7 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim):
             image_predict          = nib.Nifti1Image(predict, image_space.affine, image_space.header)
             output_file            = cases_mask_arr[i][:len(cases_mask_arr[i]) - len(suffix_npy)] + 'nii.gz'
             nib.save(image_predict, output_file)
-            downsample_file        = output_file[:len(output_file) - (len(output_file)+1)] + '-downsampled.nii.gz'
+            downsample_file        = output_file[:len(output_file) - (len(suffix_nifti_gz)+1)] + '-downsampled.nii.gz'
             bashCommand_downsample = "ResampleImage 3 " + output_file + " " + downsample_file + " " + dim[i][0] + "x" + dim[i][1] + "x" + dim[i][2] + " 1"
             output2                = subprocess.check_output(bashCommand_downsample, shell=True)
             output_nhdr            = sub_name[i][:len(sub_name[i]) - (len(suffix_nhdr)+1)] + '_BrainMask.nhdr'
@@ -331,24 +353,32 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim):
         image_space                = nib.load(b0_normalized)
         predict                    = np.load(cases_mask_arr)
         predict[predict < 1]       = 0
+        output_dir                 = os.path.dirname(b0_normalized)
+        case_mask_name             = os.path.basename(cases_mask_arr)
         image_predict              = nib.Nifti1Image(predict, image_space.affine, image_space.header)
-        output_file                = cases_mask_arr[:len(cases_mask_arr) - len(suffix_npy)] + 'nii.gz'
+        output_name                = case_mask_name[:len(case_mask_name) - len(suffix_npy)] + 'nii.gz'
+        output_file                = os.path.join(output_dir, output_name)
         nib.save(image_predict, output_file)
-        downsample_file            = output_file[:len(output_file) - (len(output_file)+1)] + '-downsampled.nii.gz'
+        case_name                  = os.path.basename(output_file)
+        downsample_name            = case_name[:len(case_name) - (len(suffix_nifti_gz)+1)] + '-downsampled.nii.gz'
+        downsample_file            = os.path.join(output_dir, downsample_name)
         bashCommand_downsample     = "ResampleImage 3 " + output_file + " " + downsample_file + " " + dim[0] + "x" + dim[1] + "x" + dim[2] + " 1"
         output2                    = subprocess.check_output(bashCommand_downsample, shell=True)
-        output_mask                = sub_name[:len(sub_name) - (len(suffix_nhdr)+1)] + '_BrainMask.nhdr'
-        bashCommand                = 'ConvertBetweenFileFormats ' + downsample_file + " " + output_nhdr
+        output_mask_name           = sub_name[:len(sub_name) - (len(suffix_nhdr)+1)] + '_BrainMask.nhdr'
+        output_mask                = os.path.join(output_dir, output_mask_name)
+        bashCommand                = 'ConvertBetweenFileFormats ' + downsample_file + " " + output_mask
         process                    = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error              = process.communicate()
         
     return output_mask
 
-def clear():
+
+def clear(directory):
     print "Cleaning files ..."
-    for filename in os.listdir(os.getcwd()):
+    for filename in os.listdir(directory):
         if filename.startswith('dwi') | filename.endswith(suffix_npy) | filename.endswith(suffix_nifti_gz):
-            os.unlink(filename)
+            os.unlink(directory+'/'+filename)
+
 
 def split(cases_file, split_dim, case_arr):
     '''
@@ -391,7 +421,7 @@ if __name__ == '__main__':
         f = pathlib.Path(args.dwi)
         if f.exists():
             print "File exist"
-            filename = os.path.basename(args.dwi)
+            filename = args.dwi
         else:
             print "File not found"
             sys.exit(1)
@@ -446,19 +476,18 @@ if __name__ == '__main__':
         elif filename.endswith(suffix_nhdr) | filename.endswith(suffix_nrrd):
             print "Nrrd / Nhdr file format"
             input_file     = filename
-            check_gradient(input_file)
-            b0_nhdr        = extract_b0(input_file)
+            asb_path       = os.path.abspath(input_file)
+            directory      = os.path.dirname(asb_path)
+            input_file     = os.path.basename(asb_path)
+            check_gradient(os.path.join(directory, input_file))
+            b0_nhdr        = extract_b0(os.path.join(directory, input_file))
             b0_nii         = nhdr_to_nifti(b0_nhdr)
             dimensions     = get_dimension(b0_nii)
             b0_resampled   = resample(b0_nii, dimensions[0])
             b0_normalized  = normalize(b0_resampled)
             dwi_mask_npy   = predict_mask(b0_normalized)
             dwi_mask       = npy_to_nhdr(b0_normalized, dwi_mask_npy, input_file, dimensions)
-
-            for filename in os.listdir(os.getcwd()):
-                if filename.startswith('dwi'):
-                    os.unlink(filename)
-
+            clear(directory)
             print "Mask file = ", dwi_mask
         else:
             print "Invalid file format, Input file should be in the format *.nii.gz, *.nii, *.nrrd, *.nhdr"

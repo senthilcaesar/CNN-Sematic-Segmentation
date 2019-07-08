@@ -5,6 +5,21 @@
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
+'''
+CompNet.py
+~~~~~~~~~~
+1)  Accepts the diffusion image in *.nhdr format
+2)  Checks if the Image axis is in the correct order
+3)  Extracts b0 Image
+4)  Converts nhdr to nii.gz
+5)  Resample nii.gz file to 246 x 246
+6)  Pads the Image addings zeros to 256 x 256
+7)  Normalize the Image by 99th percentile
+8)  Neural network brain mask prediction
+9)  Converts npy to nhdr
+10) Cleaning
+'''
+
 import re
 import os
 import sys

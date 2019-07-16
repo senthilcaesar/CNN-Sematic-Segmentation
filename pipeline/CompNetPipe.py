@@ -216,17 +216,12 @@ def get_dimension(nii_file):
                  example (128,176,256)
     '''
     input_file = nii_file
-    bashCommand_dimension = "fslinfo " + input_file + " | grep -w dim1 | awk '{print $ NF}'"
-    process = subprocess.Popen(bashCommand_dimension.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
-    line = str(output.decode(sys.stdout.encoding))
-    line = line.split()
-    index_dim1 = line.index('dim1')
-    index_dim2 = line.index('dim2')
-    index_dim3 = line.index('dim3')
-    dim1 = line[index_dim1 + 1]
-    dim2 = line[index_dim2 + 1]
-    dim3 = line[index_dim3 + 1]
+    img = nib.load(input_file)
+    header = img.header
+    dimensions = header['dim']
+    dim1 = str(dimensions[1])
+    dim2 = str(dimensions[2])
+    dim3 = str(dimensions[3])
     dimensions = (dim1, dim2, dim3)
     return dimensions
 

@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	07/16/2019
+# Last Updated: 	07/17/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -22,7 +22,7 @@ CompNet.py
 '''
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 import re
 import sys
 import argparse
@@ -78,7 +78,7 @@ suffix_npy = "npy"
 suffix_txt = "txt"
 
 
-def predict_mask(input_file):
+def predict_mask(input_file, muti_view=False):
     '''
     Parameters
     ----------
@@ -136,16 +136,77 @@ def predict_mask(input_file):
     output_file = os.path.join(os.path.dirname(input_file), output_name)
 
     if input_file.endswith(suffix_nifti_gz):
-        x_test = nib.load(input_file).get_data()
+        if multi_view == True:
+            print("Peforming Multi-view Aggregration...")
+            sagittal_test = nib.load(input_file).get_data()
+            coronal_test = np.swapaxes(sagittal_test, 0, 1)  # coronal view
+            axial_test = np.swapaxes(sagittal_test, 0, 2)  # Axial view
+
+            sagittal_test = sagittal_test.reshape(sagittal_test.shape + (1,))
+            coronal_test = coronal_test.reshape(coronal_test.shape + (1,))
+            axial_test = axial_test.reshape(axial_test.shape + (1,))
+
+            predict_sagittal = loaded_model.predict(sagittal_test, verbose=1)
+            predict_coronal = loaded_model.predict(coronal_test, verbose=1)
+            predict_axial = loaded_model.predict(axial_test, verbose=1)
+
+            sagittal_SO = predict_sagittal[5]
+            coronal_SO = predict_coronal[5]
+            axial_SO = predict_axial[5]
+
+            m, n = sagittal_SO.shape[::2]
+            x = sagittal_SO.transpose(0, 3, 1, 2).reshape(m, -1, n)
+
+            m, n = coronal_SO.shape[::2]
+            y = coronal_SO.transpose(0, 3, 1, 2).reshape(m, -1, n)
+
+            m, n = axial_SO.shape[::2]
+            z = axial_SO.transpose(0, 3, 1, 2).reshape(m, -1, n)
+
+            y = np.swapaxes(sagittal_test, 1, 0) # sagittal to coronal
+            z = np.swapaxes(sagittal_test, 2, 0) # sagittal to axial
+
+            sagittal_view = list(x.ravel())
+            coronal_view = list(y.ravel())
+            axial_view = list(z.ravel())
+
+            sagittal = []
+            coronal = []
+            axial = []
+
+            for i in range(0, len(sagittal_view)):
+                vector_sagittal = [1 - sagittal_view[i], sagittal_view[i]]
+                vector_coronal = [1 - coronal_view[i], coronal_view[i]]
+                vector_axial = [1 - axial_view[i], axial_view[i]]
+
+                sagittal.append(np.array(vector_sagittal))
+                coronal.append(np.array(vector_coronal))
+                axial.append(np.array(vector_axial))
+
+            prob_vector = []
+
+            for i in range(0, len(sagittal_view)):
+                val = np.argmax(0.4 * coronal[i] + 0.4 * axial[i] + 0.2 * sagittal[i])
+                prob_vector.append(val)
+
+            data = np.array(prob_vector)
+            shape = (x.shape[0], x.shape[1], x.shape[2])
+            SO = data.reshape(shape)
+
+        else:
+            x_test = nib.load(input_file).get_data()
     else:
         x_test = np.load(input_file)
 
-    x_test = x_test.reshape(x_test.shape + (1,))
-    preds_train = loaded_model.predict(x_test, verbose=1)
-    SO = preds_train[5]  # Segmentation Output
+    if multi_view == True:
+        return SO
+    else:
+        x_test = x_test.reshape(x_test.shape + (1,))
+        preds_train = loaded_model.predict(x_test, verbose=1)
+        SO = preds_train[5]  # Segmentation Output
 
-    np.save(output_file, SO)
-    return output_file
+        np.save(output_file, SO)
+        return output_file
 
 
 def check_gradient(Nhdr_file):
@@ -411,6 +472,8 @@ def split(cases_file, split_dim, case_arr):
 if __name__ == '__main__':
     # check if file exists
 
+    multi_view = True
+
     if args.dwi:
         f = pathlib.Path(args.dwi)
         if f.exists():
@@ -489,7 +552,10 @@ if __name__ == '__main__':
             dimensions = get_dimension(b0_nii)
             b0_resampled = resample(b0_nii, dimensions[0])
             b0_normalized = normalize(b0_resampled)
-            dwi_mask_npy = predict_mask(b0_normalized)
+            if multi_view == True:
+                dwi_mask_npy = predict_mask(b0_normalized, muti_view=True)
+            else:
+                dwi_mask_npy = predict_mask(b0_normalized, muti_view=False)
             dwi_mask = npy_to_nhdr(b0_normalized, dwi_mask_npy, input_file, dimensions)
             clear(directory)
             print "Mask file = ", dwi_mask

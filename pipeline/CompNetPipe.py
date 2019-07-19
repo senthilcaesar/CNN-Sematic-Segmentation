@@ -17,7 +17,7 @@ CompNet.py
 7)  Normalize the Image by 99th percentile
 8)  Neural network brain mask prediction
 9)  Perform Multi View Aggregation
-10)  Converts npy to nhdr
+10) Converts npy to nhdr
 11) Down sample to original resolution
 12) Cleaning
 """
@@ -57,17 +57,6 @@ from keras import regularizers
 from keras import backend as K
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
-
-# parser module for input arguments
-parser = argparse.ArgumentParser()
-
-parser.add_argument('-i', action='store', dest='dwi', type=str,
-                    help='Input Diffusion Image')
-
-try:
-    args = parser.parse_args()
-except SystemExit:
-    parser.print_help()
 
 # suffixes
 SUFFIX_NIFTI = "nii"
@@ -142,7 +131,7 @@ def predict_mask(input_file, muti_view=False):
         coronal_view = list(y.ravel())
         axial_view = list(z.ravel())
 
-        return sagittal_view, coronal_view, axial_view
+        return sagittal_view, coronal_view, axial_view, sagittal_SO, y, z
 
     # load json and create model
     json_file = open('/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/model/CompNetmodel_arch_DWI_percentile_99.json', 'r')
@@ -177,7 +166,8 @@ def predict_mask(input_file, muti_view=False):
             coronal_test = np.swapaxes(sagittal_test, 0, 1)  # coronal view
             axial_test = np.swapaxes(sagittal_test, 0, 2)  # Axial view
 
-            sagittal_view, coronal_view, axial_view = flatten_array(sagittal_test, coronal_test,
+            sagittal_view, coronal_view, axial_view, \
+                           sagittal_SO, coronal_SO, axial_SO = flatten_array(sagittal_test, coronal_test,
                                                                     axial_test, loaded_model)
 
             sagittal = []
@@ -481,9 +471,28 @@ def split(cases_file, split_dim, case_arr):
 
 
 if __name__ == '__main__':
-    # check if file exists
 
-    multi_view = True
+    # parser module for input arguments
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-i', action='store', dest='dwi', type=str,
+                        help='Input Diffusion Image')
+
+    parser.add_argument("-m", dest='multi', type=str,
+                        help="Activate Multi view aggregation mode.")
+
+    try:
+        args = parser.parse_args()
+        if len(sys.argv) == 1:
+            parser.print_help()
+            sys.exit(0)
+
+    except SystemExit:
+        sys.exit(0)
+
+    multi_view = False
+    if args.multi == 'True' or args.multi == 'true':
+        multi_view = True
 
     if args.dwi:
         f = pathlib.Path(args.dwi)

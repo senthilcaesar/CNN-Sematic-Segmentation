@@ -17,7 +17,7 @@ CompNet.py
 7)  Normalize the Image by 99th percentile
 8)  Neural network brain mask prediction
 9)  Perform Multi View Aggregation
-10)  Converts npy to nhdr
+10) Converts npy to nhdr
 11) Down sample to original resolution
 12) Cleaning
 """
@@ -29,6 +29,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 import re
 import sys
 import argparse
+import datetime
 import os.path
 import pathlib
 import subprocess
@@ -67,13 +68,16 @@ SUFFIX_NPY = "npy"
 SUFFIX_TXT = "txt"
 
 
-def predict_mask(input_file, view='sagittal'):
+def predict_mask(input_file, view='default'):
     """
     Parameters
     ----------
     input_file : str
                  (single case filename which is stored in disk in *.nii.gz format) or 
                  (list of cases, all appended to 3d numpy array stored in disk in *.npy format)
+
+    view       : str
+                 Three principal axes ( Sagittal, Coronal and Axial )
     
     Returns
     -------
@@ -98,8 +102,6 @@ def predict_mask(input_file, view='sagittal'):
     def neg_dice_coef_loss(y_true, y_pred):
         return dice_coef(y_true, y_pred)
 
-
-
     # load json and create model
     json_file = open('/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/model/CompNetmodel_arch_DWI_percentile_99.json', 'r')
     loaded_model_json = json_file.read()
@@ -108,7 +110,7 @@ def predict_mask(input_file, view='sagittal'):
 
     # load weights into new model
     loaded_model.load_weights(
-        '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/model/weights-' + view + '-improvement-04.h5')
+        '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/model/weights-' + view + '-improvement-05.h5')
     print("Loaded model from disk")
 
     # evaluate loaded model on test data
@@ -135,7 +137,6 @@ def predict_mask(input_file, view='sagittal'):
     else:
         x_test = np.load(input_file)
 
-
     x_test = x_test.reshape(x_test.shape + (1,))
     predict_x = loaded_model.predict(x_test, verbose=1)
     SO = predict_x[5]  # Segmentation Output
@@ -149,54 +150,72 @@ def predict_mask(input_file, view='sagittal'):
 
 
 def multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file):
+    """
+    Parameters
+    ----------
+       sagittal_SO : str
+                     Sagittal view predicted mask filename which is in 3d numpy *.npy format stored in disk
+       coronal_SO  : str
+                     coronal view predicted mask filename which is in 3d numpy *.npy format stored in disk
+       axial_SO    : str
+                     axial view predicted mask filename which is in 3d numpy *.npy format stored in disk
+       input_file  : str
+                     single input case filename which is in *.nhdr format
 
-        x = np.load(sagittal_SO)
-        y = np.load(coronal_SO)
-        z = np.load(axial_SO)
+    Returns
+    -------
+       output_file : str
+                     Segmentation file name obtained by combining the probability maps from all the three
+                     segmentations ( sagittal_SO, coronal_SO, axial_SO ) . Stored in disk in 3d numpy *.npy format
 
-        m, n = x.shape[::2]
-        x = x.transpose(0, 3, 1, 2).reshape(m, -1, n)
+    """
+    x = np.load(sagittal_SO)
+    y = np.load(coronal_SO)
+    z = np.load(axial_SO)
 
-        m, n = y.shape[::2]
-        y = y.transpose(0, 3, 1, 2).reshape(m, -1, n)
+    m, n = x.shape[::2]
+    x = x.transpose(0, 3, 1, 2).reshape(m, -1, n)
 
-        m, n = z.shape[::2]
-        z = z.transpose(0, 3, 1, 2).reshape(m, -1, n)
+    m, n = y.shape[::2]
+    y = y.transpose(0, 3, 1, 2).reshape(m, -1, n)
 
-        sagittal_view = list(x.ravel())
-        coronal_view = list(y.ravel())
-        axial_view = list(z.ravel())
+    m, n = z.shape[::2]
+    z = z.transpose(0, 3, 1, 2).reshape(m, -1, n)
 
-        sagittal = []
-        coronal = []
-        axial = []
+    sagittal_view = list(x.ravel())
+    coronal_view = list(y.ravel())
+    axial_view = list(z.ravel())
 
-        print("Performing Muti View Aggregation...")
-        for i in range(0, len(sagittal_view)):
-            vector_sagittal = [1 - sagittal_view[i], sagittal_view[i]]
-            vector_coronal = [1 - coronal_view[i], coronal_view[i]]
-            vector_axial = [1 - axial_view[i], axial_view[i]]
+    sagittal = []
+    coronal = []
+    axial = []
 
-            sagittal.append(np.array(vector_sagittal))
-            coronal.append(np.array(vector_coronal))
-            axial.append(np.array(vector_axial))
+    print("Performing Muti View Aggregation...")
+    for i in range(0, len(sagittal_view)):
+        vector_sagittal = [1 - sagittal_view[i], sagittal_view[i]]
+        vector_coronal = [1 - coronal_view[i], coronal_view[i]]
+        vector_axial = [1 - axial_view[i], axial_view[i]]
 
-        case_name = os.path.basename(input_file)
-        output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-multi-mask.npy'
-        output_file = os.path.join(os.path.dirname(input_file), output_name)
+        sagittal.append(np.array(vector_sagittal))
+        coronal.append(np.array(vector_coronal))
+        axial.append(np.array(vector_axial))
 
-        prob_vector = []
+    case_name = os.path.basename(input_file)
+    output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-multi-mask.npy'
+    output_file = os.path.join(os.path.dirname(input_file), output_name)
 
-        for i in range(0, len(sagittal_view)):
-            val = np.argmax(0.4 * coronal[i] + 0.4 * axial[i] + 0.2 * sagittal[i])
-            prob_vector.append(val)
+    prob_vector = []
 
-        data = np.array(prob_vector)
-        shape = (256, 256, 256)
-        SO = data.reshape(shape)
+    for i in range(0, len(sagittal_view)):
+        val = np.argmax(0.4 * coronal[i] + 0.4 * axial[i] + 0.2 * sagittal[i])
+        prob_vector.append(val)
 
-        np.save(output_file, SO)
-        return output_file
+    data = np.array(prob_vector)
+    shape = (256, 256, 256)
+    SO = data.reshape(shape)
+
+    np.save(output_file, SO)
+    return output_file
 
 
 def check_gradient(Nhdr_file):
@@ -230,14 +249,12 @@ def check_gradient(Nhdr_file):
         return True
 
 
-def resample(nii_file, dim1):
+def resample(nii_file):
     """
     Parameters
     ----------
     nii_file    : str
                   Accepts nifti filename in *.nii.gz format
-    dim1        : str
-                  Dimension of "x" axis in the standard coordinate space
     Returns
     -------
     output_file : str
@@ -249,7 +266,7 @@ def resample(nii_file, dim1):
     case_name = os.path.basename(input_file)
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-linear.nii.gz'
     output_file = os.path.join(os.path.dirname(input_file), output_name)
-    bashCommand_resample = "ResampleImage 3 " + input_file + " " + output_file + " " + dim1 + "x246x246 1"
+    bashCommand_resample = "ResampleImage 3 " + input_file + " " + output_file + " " + "256x246x246 1"
     output2 = subprocess.check_output(bashCommand_resample, shell=True)
     return output_file
 
@@ -368,6 +385,8 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
     dim                 : tuple or list of tuple
                           tuple (dimension of single case in tuple format, (128,176,256))
                           list of tuples (dimension of all cases)
+    view                : str
+                          Three principal axes ( Sagittal, Coronal and Axial )
     Returns
     --------
     output_mask         : str or list
@@ -410,9 +429,24 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
         bashCommand_downsample = "ResampleImage 3 " + output_file + " " + downsample_file + " " + dim[0] + "x" + dim[
             1] + "x" + dim[2] + " 1"
         output2 = subprocess.check_output(bashCommand_downsample, shell=True)
+
+        case_name = os.path.basename(downsample_file)
+        fill_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-filled.nii.gz'
+        filled_file = os.path.join(output_dir, fill_name)
+        fill_cmd = "ImageMath 3 " + filled_file + " FillHoles " + downsample_file
+        process = subprocess.Popen(fill_cmd.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+
+        case_name = os.path.basename(filled_file)
+        clean_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-cleaned.nii.gz'
+        cleaned_file = os.path.join(output_dir, clean_name)
+        clean_cmd = "maskfilter -force -scale 5 " + filled_file + " clean " + cleaned_file
+        process = subprocess.Popen(clean_cmd.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+
         output_mask_name = sub_name[:len(sub_name) - (len(SUFFIX_NHDR) + 1)] + '-' + view + '_BrainMask.nhdr'
         output_mask = os.path.join(output_dir, output_mask_name)
-        bashCommand = 'ConvertBetweenFileFormats ' + downsample_file + " " + output_mask
+        bashCommand = 'ConvertBetweenFileFormats ' + cleaned_file + " " + output_mask
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
@@ -461,6 +495,7 @@ def split(cases_file, split_dim, case_arr):
 
 if __name__ == '__main__':
 
+    start_t = datetime.datetime.now()
     # parser module for input arguments
     parser = argparse.ArgumentParser()
 
@@ -524,7 +559,7 @@ if __name__ == '__main__':
                     cases_dim.append(dimensions)
                     x_dim += int(dimensions[0])
                     split_dim.append(int(dimensions[0]))
-                    b0_resampled = resample(b0_nii, dimensions[0])
+                    b0_resampled = resample(b0_nii)
                     b0_normalized = normalize(b0_resampled)
                     b0_normalized_cases.append(b0_normalized)
                     img = nib.load(b0_normalized)
@@ -563,7 +598,7 @@ if __name__ == '__main__':
                 b0_nhdr = asb_path
             b0_nii = nhdr_to_nifti(b0_nhdr)
             dimensions = get_dimension(b0_nii)
-            b0_resampled = resample(b0_nii, dimensions[0])
+            b0_resampled = resample(b0_nii)
             b0_normalized = normalize(b0_resampled)
 
             dwi_mask_sagittal = predict_mask(b0_normalized, view='sagittal')
@@ -578,5 +613,8 @@ if __name__ == '__main__':
 
             clear(directory)
             print "Mask file = ", brain_mask_multi
+            end_t = datetime.datetime.now()
+            total_t = end_t - start_t
+            print("Time taken = ", total_t.seconds, "sec")
         else:
             print "Invalid file format, Input file should be in the format *.nii.gz, *.nii, *.nrrd, *.nhdr"

@@ -17,7 +17,7 @@ CompNet.py
 7)  Normalize the Image by 99th percentile
 8)  Neural network brain mask prediction
 9)  Perform Multi View Aggregation
-10) Converts npy to nhdr
+10)  Converts npy to nhdr
 11) Down sample to original resolution
 12) Cleaning
 """
@@ -25,7 +25,7 @@ CompNet.py
 # pylint: disable=invalid-name
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 import re
 import sys
 import argparse
@@ -67,7 +67,7 @@ SUFFIX_NPY = "npy"
 SUFFIX_TXT = "txt"
 
 
-def predict_mask(input_file, muti_view=False):
+def predict_mask(input_file, view='sagittal'):
     """
     Parameters
     ----------
@@ -98,40 +98,7 @@ def predict_mask(input_file, muti_view=False):
     def neg_dice_coef_loss(y_true, y_pred):
         return dice_coef(y_true, y_pred)
 
-    def flatten_array(sagittal_test, coronal_test, axial_test, loaded_model):
-        sagittal_test = sagittal_test.reshape(sagittal_test.shape + (1,))
-        coronal_test = coronal_test.reshape(coronal_test.shape + (1,))
-        axial_test = axial_test.reshape(axial_test.shape + (1,))
 
-        predict_sagittal = loaded_model.predict(sagittal_test, verbose=1)
-        sagittal_SO = predict_sagittal[5]
-        del predict_sagittal
-
-        predict_coronal = loaded_model.predict(coronal_test, verbose=1)
-        coronal_SO = predict_coronal[5]
-        del predict_coronal
-
-        predict_axial = loaded_model.predict(axial_test, verbose=1)
-        axial_SO = predict_axial[5]
-        del predict_axial
-
-        m, n = sagittal_SO.shape[::2]
-        x = sagittal_SO.transpose(0, 3, 1, 2).reshape(m, -1, n)
-
-        m, n = coronal_SO.shape[::2]
-        y = coronal_SO.transpose(0, 3, 1, 2).reshape(m, -1, n)
-
-        m, n = axial_SO.shape[::2]
-        z = axial_SO.transpose(0, 3, 1, 2).reshape(m, -1, n)
-
-        y = np.swapaxes(coronal_SO, 1, 0)  # coronal to sagittal
-        z = np.swapaxes(axial_SO, 2, 0)  # axial to sagittal
-
-        sagittal_view = list(x.ravel())
-        coronal_view = list(y.ravel())
-        axial_view = list(z.ravel())
-
-        return sagittal_view, coronal_view, axial_view, sagittal_SO, y, z
 
     # load json and create model
     json_file = open('/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/model/CompNetmodel_arch_DWI_percentile_99.json', 'r')
@@ -141,7 +108,7 @@ def predict_mask(input_file, muti_view=False):
 
     # load weights into new model
     loaded_model.load_weights(
-        "/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/model/CompNetmodel_weights_DWI_percentile_99.h5")
+        '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/model/weights-' + view + '-improvement-04.h5')
     print("Loaded model from disk")
 
     # evaluate loaded model on test data
@@ -156,55 +123,77 @@ def predict_mask(input_file, muti_view=False):
                                'xxconv10': 'mse', 'xxfinal_op': 'mse'})
 
     case_name = os.path.basename(input_file)
-    output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-mask.npy'
+    output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-' + view + '-mask.npy'
     output_file = os.path.join(os.path.dirname(input_file), output_name)
 
     if input_file.endswith(SUFFIX_NIFTI_GZ):
-        if multi_view == True:
-            print("Performing Multi-view Aggregation...")
-            sagittal_test = nib.load(input_file).get_data()
-            coronal_test = np.swapaxes(sagittal_test, 0, 1)  # coronal view
-            axial_test = np.swapaxes(sagittal_test, 0, 2)  # Axial view
-
-            sagittal_view, coronal_view, axial_view, \
-                           sagittal_SO, coronal_SO, axial_SO = flatten_array(sagittal_test, coronal_test,
-                                                                    axial_test, loaded_model)
-
-            sagittal = []
-            coronal = []
-            axial = []
-
-            for i in range(0, len(sagittal_view)):
-                vector_sagittal = [1 - sagittal_view[i], sagittal_view[i]]
-                vector_coronal = [1 - coronal_view[i], coronal_view[i]]
-                vector_axial = [1 - axial_view[i], axial_view[i]]
-
-                sagittal.append(np.array(vector_sagittal))
-                coronal.append(np.array(vector_coronal))
-                axial.append(np.array(vector_axial))
-
-            prob_vector = []
-
-            for i in range(0, len(sagittal_view)):
-                val = np.argmax(0.4 * coronal[i] + 0.4 * axial[i] + 0.2 * sagittal[i])
-                prob_vector.append(val)
-
-            data = np.array(prob_vector)
-            shape = (256, 256, 256)
-            SO = data.reshape(shape)
-            np.save(output_file, SO)
-
-        else:
-            x_test = nib.load(input_file).get_data()
+        x_test = nib.load(input_file).get_data()
+        if view == 'coronal':
+            x_test = np.swapaxes(x_test, 0, 1)  # coronal view
+        elif view == 'axial':
+            x_test = np.swapaxes(x_test, 0, 2)  # axial view
     else:
         x_test = np.load(input_file)
 
-    if multi_view == True:
-        return output_file
-    else:
-        x_test = x_test.reshape(x_test.shape + (1,))
-        preds_train = loaded_model.predict(x_test, verbose=1)
-        SO = preds_train[5]  # Segmentation Output
+
+    x_test = x_test.reshape(x_test.shape + (1,))
+    predict_x = loaded_model.predict(x_test, verbose=1)
+    SO = predict_x[5]  # Segmentation Output
+
+    if view == 'coronal':
+        SO = np.swapaxes(SO, 1, 0)
+    elif view == 'axial':
+        SO = np.swapaxes(SO, 2, 0)
+    np.save(output_file, SO)
+    return output_file
+
+
+def multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file):
+
+        x = np.load(sagittal_SO)
+        y = np.load(coronal_SO)
+        z = np.load(axial_SO)
+
+        m, n = x.shape[::2]
+        x = x.transpose(0, 3, 1, 2).reshape(m, -1, n)
+
+        m, n = y.shape[::2]
+        y = y.transpose(0, 3, 1, 2).reshape(m, -1, n)
+
+        m, n = z.shape[::2]
+        z = z.transpose(0, 3, 1, 2).reshape(m, -1, n)
+
+        sagittal_view = list(x.ravel())
+        coronal_view = list(y.ravel())
+        axial_view = list(z.ravel())
+
+        sagittal = []
+        coronal = []
+        axial = []
+
+        print("Performing Muti View Aggregation...")
+        for i in range(0, len(sagittal_view)):
+            vector_sagittal = [1 - sagittal_view[i], sagittal_view[i]]
+            vector_coronal = [1 - coronal_view[i], coronal_view[i]]
+            vector_axial = [1 - axial_view[i], axial_view[i]]
+
+            sagittal.append(np.array(vector_sagittal))
+            coronal.append(np.array(vector_coronal))
+            axial.append(np.array(vector_axial))
+
+        case_name = os.path.basename(input_file)
+        output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-multi-mask.npy'
+        output_file = os.path.join(os.path.dirname(input_file), output_name)
+
+        prob_vector = []
+
+        for i in range(0, len(sagittal_view)):
+            val = np.argmax(0.4 * coronal[i] + 0.4 * axial[i] + 0.2 * sagittal[i])
+            prob_vector.append(val)
+
+        data = np.array(prob_vector)
+        shape = (256, 256, 256)
+        SO = data.reshape(shape)
 
         np.save(output_file, SO)
         return output_file
@@ -363,7 +352,7 @@ def normalize(b0_resampled):
     return output_file
 
 
-def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim):
+def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='default'):
     """
     Parameters
     ---------
@@ -421,7 +410,7 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim):
         bashCommand_downsample = "ResampleImage 3 " + output_file + " " + downsample_file + " " + dim[0] + "x" + dim[
             1] + "x" + dim[2] + " 1"
         output2 = subprocess.check_output(bashCommand_downsample, shell=True)
-        output_mask_name = sub_name[:len(sub_name) - (len(SUFFIX_NHDR) + 1)] + '_BrainMask.nhdr'
+        output_mask_name = sub_name[:len(sub_name) - (len(SUFFIX_NHDR) + 1)] + '-' + view + '_BrainMask.nhdr'
         output_mask = os.path.join(output_dir, output_mask_name)
         bashCommand = 'ConvertBetweenFileFormats ' + downsample_file + " " + output_mask
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
@@ -550,12 +539,16 @@ if __name__ == '__main__':
             merge = np.memmap(binary_file, dtype=np.float32, mode='r+', shape=(x_dim, y_dim, z_dim))
             print "Saving training data to disk"
             np.save(cases_file, merge)
-            dwi_mask_npy = predict_mask(cases_file)
-            cases_mask_arr = split(dwi_mask_npy, split_dim, case_arr)
-            dwi_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_arr, case_arr, cases_dim)
-            for masks in dwi_mask:
-                print "Mask file = ", masks
-                clear(os.path.dirname(masks))
+
+            # dwi_mask_sagittal = predict_mask(cases_file, view='sagittal')
+            # dwi_mask_coronal = predict_mask(cases_file, view='coronal')
+            # dwi_mask_axial = predict_mask(cases_file, view='axial')
+
+            # cases_mask_arr = split(dwi_mask_npy, split_dim, case_arr)
+            # dwi_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_arr, case_arr, cases_dim)
+            # for masks in dwi_mask:
+            #     print "Mask file = ", masks
+            #     clear(os.path.dirname(masks))
 
         # Input in nrrd / nhdr format
         elif filename.endswith(SUFFIX_NHDR) | filename.endswith(SUFFIX_NRRD):
@@ -572,12 +565,18 @@ if __name__ == '__main__':
             dimensions = get_dimension(b0_nii)
             b0_resampled = resample(b0_nii, dimensions[0])
             b0_normalized = normalize(b0_resampled)
-            if multi_view == True:
-                dwi_mask_npy = predict_mask(b0_normalized, muti_view=True)
-            else:
-                dwi_mask_npy = predict_mask(b0_normalized, muti_view=False)
-            dwi_mask = npy_to_nhdr(b0_normalized, dwi_mask_npy, input_file, dimensions)
+
+            dwi_mask_sagittal = predict_mask(b0_normalized, view='sagittal')
+            dwi_mask_coronal = predict_mask(b0_normalized, view='coronal')
+            dwi_mask_axial = predict_mask(b0_normalized, view='axial')
+            multi_view_mask = multi_view_agg(dwi_mask_sagittal, dwi_mask_coronal, dwi_mask_axial, input_file)
+
+            brain_mask_sagittal = npy_to_nhdr(b0_normalized, dwi_mask_sagittal, input_file, dimensions, view='sagittal')
+            brain_mask_coronal = npy_to_nhdr(b0_normalized, dwi_mask_coronal, input_file, dimensions, view='coronal')
+            brain_mask_axial = npy_to_nhdr(b0_normalized, dwi_mask_axial, input_file, dimensions, view='axial')
+            brain_mask_multi = npy_to_nhdr(b0_normalized, multi_view_mask, input_file, dimensions, view='multi')
+
             clear(directory)
-            print "Mask file = ", dwi_mask
+            print "Mask file = ", brain_mask_multi
         else:
             print "Invalid file format, Input file should be in the format *.nii.gz, *.nii, *.nrrd, *.nhdr"

@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	07/22/2019
+# Last Updated: 	07/23/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -110,7 +110,7 @@ def predict_mask(input_file, view='default'):
 
     # load weights into new model
     loaded_model.load_weights(
-        '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/model/weights-' + view + '-improvement-05.h5')
+        '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/model/weights-' + view + '-improvement-07.h5')
     print("Loaded model from disk")
 
     # evaluate loaded model on test data
@@ -201,13 +201,13 @@ def multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file):
         axial.append(np.array(vector_axial))
 
     case_name = os.path.basename(input_file)
-    output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-multi-mask.npy'
+    output_name = case_name[:len(case_name) - (len(SUFFIX_NHDR) + 1)] + '-multi-mask.npy'
     output_file = os.path.join(os.path.dirname(input_file), output_name)
 
     prob_vector = []
 
     for i in range(0, len(sagittal_view)):
-        val = np.argmax(0.4 * coronal[i] + 0.4 * axial[i] + 0.2 * sagittal[i])
+        val = np.argmax(0.4 * coronal[i] + 0.5 * axial[i] + 0.1 * sagittal[i])
         prob_vector.append(val)
 
     data = np.array(prob_vector)
@@ -393,6 +393,7 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
                           str  (single brain mask filename which is stored in disk in *.nhdr format)
                           list (list of brain mask for all cases which is stored in disk in *.nhdr format)
     """
+    print("Converting file format...")
     if isinstance(b0_normalized_cases, list):
         output_mask = []
         for i in range(0, len(b0_normalized_cases)):
@@ -408,15 +409,33 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
             bashCommand_downsample = "ResampleImage 3 " + output_file + " " + downsample_file + " " + dim[i][0] + "x" + \
                                      dim[i][1] + "x" + dim[i][2] + " 1"
             output2 = subprocess.check_output(bashCommand_downsample, shell=True)
-            output_nhdr = sub_name[i][:len(sub_name[i]) - (len(SUFFIX_NHDR) + 1)] + '_BrainMask.nhdr'
-            bashCommand = 'ConvertBetweenFileFormats ' + downsample_file + " " + output_nhdr
+
+            case_name = os.path.basename(downsample_file)
+            fill_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-filled.nii.gz'
+            filled_file = os.path.join(output_dir, fill_name)
+            fill_cmd = "ImageMath 3 " + filled_file + " FillHoles " + downsample_file
+            process = subprocess.Popen(fill_cmd.split(), stdout=subprocess.PIPE)
+            output, error = process.communicate()
+
+            case_name = os.path.basename(filled_file)
+            clean_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-cleaned.nii.gz'
+            cleaned_file = os.path.join(output_dir, clean_name)
+            clean_cmd = "maskfilter -force -scale 5 " + filled_file + " clean " + cleaned_file
+            process = subprocess.Popen(clean_cmd.split(), stdout=subprocess.PIPE)
+            output, error = process.communicate()
+
+
+            output_nhdr = sub_name[i][:len(sub_name[i]) - (len(SUFFIX_NHDR) + 1)] + '-' + view + '_BrainMask.nhdr'
+            output_folder = os.path.join(output_dir, output_nhdr)
+            bashCommand = 'ConvertBetweenFileFormats ' + cleaned_file + " " + output_folder
             process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
             output, error = process.communicate()
-            output_mask.append(output_nhdr)
+            output_mask.append(output_folder)
     else:
         image_space = nib.load(b0_normalized)
         predict = np.load(cases_mask_arr)
-        predict[predict < 1] = 0
+        predict[predict >= 0.5] = 1
+        predict[predict < 0.5] = 0
         output_dir = os.path.dirname(b0_normalized)
         case_mask_name = os.path.basename(cases_mask_arr)
         image_predict = nib.Nifti1Image(predict, image_space.affine, image_space.header)
@@ -460,7 +479,7 @@ def clear(directory):
             os.unlink(directory + '/' + filename)
 
 
-def split(cases_file, split_dim, case_arr):
+def split(cases_file, split_dim, case_arr, view='default'):
     """
     Parameters
     ---------
@@ -484,7 +503,7 @@ def split(cases_file, split_dim, case_arr):
         end = start + split_dim[i]
         casex = SO[start:end, :, :]
         input_file = str(case_arr[i])
-        output_file = input_file[:len(input_file) - (len(SUFFIX_NHDR) + 1)] + '_SO.npy'
+        output_file = input_file[:len(input_file) - (len(SUFFIX_NHDR) + 1)] + '-' + view +'_SO.npy'
         predict_mask.append(output_file)
         np.save(output_file, casex)
         start = end
@@ -575,15 +594,48 @@ if __name__ == '__main__':
             print "Saving training data to disk"
             np.save(cases_file, merge)
 
-            # dwi_mask_sagittal = predict_mask(cases_file, view='sagittal')
-            # dwi_mask_coronal = predict_mask(cases_file, view='coronal')
-            # dwi_mask_axial = predict_mask(cases_file, view='axial')
+            dwi_mask_sagittal = predict_mask(cases_file, view='sagittal')
+            dwi_mask_coronal = predict_mask(cases_file, view='coronal')
+            dwi_mask_axial = predict_mask(cases_file, view='axial')
 
-            # cases_mask_arr = split(dwi_mask_npy, split_dim, case_arr)
-            # dwi_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_arr, case_arr, cases_dim)
-            # for masks in dwi_mask:
-            #     print "Mask file = ", masks
-            #     clear(os.path.dirname(masks))
+            print("Splitting files....")
+            cases_mask_sagittal = split(dwi_mask_sagittal, split_dim, case_arr, view='sagittal')
+            cases_mask_coronal = split(dwi_mask_coronal, split_dim, case_arr, view='coronal')
+            cases_mask_axial = split(dwi_mask_axial, split_dim, case_arr, view='axial')
+
+            print(cases_mask_sagittal)
+            print(cases_mask_coronal)
+            print(cases_mask_coronal)
+
+            # multi_binary_file = '/tmp/multi_binary'
+            # multi_handle = open(multi_binary_file, 'wb')
+            for i in range(0, len(cases_mask_sagittal)):
+                sagittal_SO = cases_mask_sagittal[i]
+                coronal_SO = cases_mask_coronal[i]
+                axial_SO = cases_mask_axial[i]
+                input_file = case_arr[i]
+                multi_view_mask = multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file)
+                brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], multi_view_mask, case_arr[i], cases_dim[i], view='multi')
+            #     aggregation = np.load(brain_mask_multi)
+            #     aggregation.tofile(multi_binary_file)
+            # multi_handle.close()
+            # print "Merging aggregation files"
+            # multi_file = '/tmp/aggregation.npy'
+            # merge_multi = np.memmap(binary_file, dtype=np.float32, mode='r+', shape=(x_dim, y_dim, z_dim))
+            # print "Saving training data to disk"
+            # np.save(multi_file, merge_multi)
+            #
+            # print("Splitting aggregation files...")
+            # cases_mask_multi = split(multi_file, split_dim, case_arr, view='multi')
+
+            sagittal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_sagittal, case_arr, cases_dim, view='sagittal')
+            coronal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_coronal, case_arr, cases_dim, view='coronal')
+            axial_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_axial, case_arr, cases_dim, view='axial')
+
+
+            for masks in sagittal_mask:
+                print "Mask file = ", masks
+                clear(os.path.dirname(masks))
 
         # Input in nrrd / nhdr format
         elif filename.endswith(SUFFIX_NHDR) | filename.endswith(SUFFIX_NRRD):

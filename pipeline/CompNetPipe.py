@@ -479,7 +479,7 @@ def clear(directory):
             os.unlink(directory + '/' + filename)
 
 
-def split(cases_file, split_dim, case_arr, view='default'):
+def split(cases_file, case_arr, view='default'):
     """
     Parameters
     ---------
@@ -494,14 +494,25 @@ def split(cases_file, split_dim, case_arr, view='default'):
     predict_mask : list
                    Contains the predicted mask filename of all the cases which is stored in disk in *.npy format
     """
+
+
     count = 0
     start = 0
-    end = start + split_dim[0]
+    end = start + 256
     SO = np.load(cases_file)
+
+    if view == 'coronal':
+        SO = np.swapaxes(SO, 1, 0)
+    elif view == 'axial':
+        SO = np.swapaxes(SO, 2, 0)
     predict_mask = []
-    for i in range(0, len(split_dim)):
-        end = start + split_dim[i]
-        casex = SO[start:end, :, :]
+    for i in range(0, len(case_arr)):
+        end = start + 256
+        casex = SO[start:end, :, :, :]
+        if view == 'coronal':
+            casex = np.swapaxes(casex, 0, 1)
+        elif view == 'axial':
+            casex = np.swapaxes(casex, 0, 2)
         input_file = str(case_arr[i])
         output_file = input_file[:len(input_file) - (len(SUFFIX_NHDR) + 1)] + '-' + view +'_SO.npy'
         predict_mask.append(output_file)
@@ -590,7 +601,7 @@ if __name__ == '__main__':
             f_handle.close()
             print "Merging npy files"
             cases_file = '/tmp/casefile.npy'
-            merge = np.memmap(binary_file, dtype=np.float32, mode='r+', shape=(x_dim, y_dim, z_dim))
+            merge = np.memmap(binary_file, dtype=np.float32, mode='r+', shape=(256*len(cases_dim), y_dim, z_dim))
             print "Saving training data to disk"
             np.save(cases_file, merge)
 
@@ -599,23 +610,24 @@ if __name__ == '__main__':
             dwi_mask_axial = predict_mask(cases_file, view='axial')
 
             print("Splitting files....")
-            cases_mask_sagittal = split(dwi_mask_sagittal, split_dim, case_arr, view='sagittal')
-            cases_mask_coronal = split(dwi_mask_coronal, split_dim, case_arr, view='coronal')
-            cases_mask_axial = split(dwi_mask_axial, split_dim, case_arr, view='axial')
 
-            print(cases_mask_sagittal)
-            print(cases_mask_coronal)
-            print(cases_mask_coronal)
-
-            # multi_binary_file = '/tmp/multi_binary'
-            # multi_handle = open(multi_binary_file, 'wb')
+            cases_mask_sagittal = split(dwi_mask_sagittal, case_arr, view='sagittal')
+            cases_mask_coronal = split(dwi_mask_coronal, case_arr, view='coronal')
+            cases_mask_axial = split(dwi_mask_axial, case_arr, view='axial')
+            #
+            # # multi_binary_file = '/tmp/multi_binary'
+            # # multi_handle = open(multi_binary_file, 'wb')
             for i in range(0, len(cases_mask_sagittal)):
+
                 sagittal_SO = cases_mask_sagittal[i]
                 coronal_SO = cases_mask_coronal[i]
                 axial_SO = cases_mask_axial[i]
+
                 input_file = case_arr[i]
+
                 multi_view_mask = multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file)
                 brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], multi_view_mask, case_arr[i], cases_dim[i], view='multi')
+
             #     aggregation = np.load(brain_mask_multi)
             #     aggregation.tofile(multi_binary_file)
             # multi_handle.close()

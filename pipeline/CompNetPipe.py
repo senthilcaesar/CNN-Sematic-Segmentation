@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	07/23/2019
+# Last Updated: 	07/24/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -25,7 +25,7 @@ CompNet.py
 # pylint: disable=invalid-name
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 import re
 import sys
 import argparse
@@ -35,6 +35,7 @@ import pathlib
 import subprocess
 import nibabel as nib
 import numpy as np
+import multiprocessing as mp
 from os import path
 from keras.models import load_model
 from keras.models import model_from_json
@@ -110,7 +111,7 @@ def predict_mask(input_file, view='default'):
 
     # load weights into new model
     loaded_model.load_weights(
-        '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/model/weights-' + view + '-improvement-07.h5')
+        '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/model/weights-' + view + '-improvement-10.h5')
     print("Loaded model from disk")
 
     # evaluate loaded model on test data
@@ -141,10 +142,10 @@ def predict_mask(input_file, view='default'):
     predict_x = loaded_model.predict(x_test, verbose=1)
     SO = predict_x[5]  # Segmentation Output
 
-    if view == 'coronal':
-        SO = np.swapaxes(SO, 1, 0)
-    elif view == 'axial':
-        SO = np.swapaxes(SO, 2, 0)
+    # if view == 'coronal':
+    #     SO = np.swapaxes(SO, 1, 0)
+    # elif view == 'axial':
+    #     SO = np.swapaxes(SO, 2, 0)
     np.save(output_file, SO)
     return output_file
 
@@ -357,11 +358,12 @@ def normalize(b0_resampled):
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-normalized.nii.gz'
     output_file = os.path.join(os.path.dirname(input_file), output_name)
     img = nib.load(b0_resampled)
-    imgU16 = img.get_data().astype(np.float64)
-    p = np.percentile(imgU16, 99)
-    data = imgU16 / p
-    data[data > 1] = 1
-    data[data < 0] = sys.float_info.epsilon
+    imgU16 = img.get_data().astype(np.float32)
+    # p = np.percentile(imgU16, 99)
+    # data = imgU16 / p
+    # data[data > 1] = 1
+    # data[data < 0] = sys.float_info.epsilons
+    data = imgU16
     npad = ((0, 0), (5, 5), (5, 5))
     image = np.pad(data, pad_width=npad, mode='constant', constant_values=0)
     image_dwi = nib.Nifti1Image(image, img.affine, img.header)
@@ -501,14 +503,10 @@ def split(cases_file, case_arr, view='default'):
     end = start + 256
     SO = np.load(cases_file)
 
-    if view == 'coronal':
-        SO = np.swapaxes(SO, 1, 0)
-    elif view == 'axial':
-        SO = np.swapaxes(SO, 2, 0)
     predict_mask = []
     for i in range(0, len(case_arr)):
         end = start + 256
-        casex = SO[start:end, :, :, :]
+        casex = SO[start:end, :, :]
         if view == 'coronal':
             casex = np.swapaxes(casex, 0, 1)
         elif view == 'axial':
@@ -562,8 +560,14 @@ if __name__ == '__main__':
             with open(filename) as f:
                 case_arr = f.read().splitlines()
 
-            binary_file = '/tmp/binary'
-            f_handle = open(binary_file, 'wb')
+            binary_file_s = '/tmp/binary_s'
+            binary_file_c = '/tmp/binary_c'
+            binary_file_a = '/tmp/binary_a'
+
+            f_handle_s = open(binary_file_s, 'wb')
+            f_handle_c = open(binary_file_c, 'wb')
+            f_handle_a = open(binary_file_a, 'wb')
+
             x_dim = 0
             y_dim = 256
             z_dim = 256
@@ -593,30 +597,48 @@ if __name__ == '__main__':
                     b0_normalized = normalize(b0_resampled)
                     b0_normalized_cases.append(b0_normalized)
                     img = nib.load(b0_normalized)
-                    imgU16 = img.get_data().astype(np.float32)
-                    imgU16.tofile(f_handle)
+
+
+                    imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
+
+                    imgU16_coronal = np.swapaxes(imgU16_sagittal, 0, 1)  # coronal view
+
+                    imgU16_axial = np.swapaxes(imgU16_sagittal, 0, 2) # Axial view
+
+                    imgU16_sagittal.tofile(f_handle_s)
+                    imgU16_coronal.tofile(f_handle_c)
+                    imgU16_axial.tofile(f_handle_a)
+
                 else:
                     print "File not found ", input_file
                     sys.exit(1)
-            f_handle.close()
+            f_handle_s.close()
+            f_handle_c.close()
+            f_handle_a.close()
             print "Merging npy files"
-            cases_file = '/tmp/casefile.npy'
-            merge = np.memmap(binary_file, dtype=np.float32, mode='r+', shape=(256*len(cases_dim), y_dim, z_dim))
-            print "Saving training data to disk"
-            np.save(cases_file, merge)
+            cases_file_s = '/rfanfs/pnl-zorro/home/sq566/tmp/casefile-sagittal.npy'
+            cases_file_c = '/rfanfs/pnl-zorro/home/sq566/tmp/casefile-coronal.npy'
+            cases_file_a = '/rfanfs/pnl-zorro/home/sq566/tmp/casefile-axial.npy'
 
-            dwi_mask_sagittal = predict_mask(cases_file, view='sagittal')
-            dwi_mask_coronal = predict_mask(cases_file, view='coronal')
-            dwi_mask_axial = predict_mask(cases_file, view='axial')
+            merge_s = np.memmap(binary_file_s, dtype=np.float32, mode='r+', shape=(256 * len(cases_dim), y_dim, z_dim))
+            merge_c = np.memmap(binary_file_c, dtype=np.float32, mode='r+', shape=(256 * len(cases_dim), y_dim, z_dim))
+            merge_a = np.memmap(binary_file_a, dtype=np.float32, mode='r+', shape=(256 * len(cases_dim), y_dim, z_dim))
+
+            print "Saving training data to disk"
+            np.save(cases_file_s, merge_s)
+            np.save(cases_file_c, merge_c)
+            np.save(cases_file_a, merge_a)
+
+            dwi_mask_sagittal = predict_mask(cases_file_s, view='sagittal')
+            dwi_mask_coronal = predict_mask(cases_file_c, view='coronal')
+            dwi_mask_axial = predict_mask(cases_file_a, view='axial')
 
             print("Splitting files....")
 
             cases_mask_sagittal = split(dwi_mask_sagittal, case_arr, view='sagittal')
             cases_mask_coronal = split(dwi_mask_coronal, case_arr, view='coronal')
             cases_mask_axial = split(dwi_mask_axial, case_arr, view='axial')
-            #
-            # # multi_binary_file = '/tmp/multi_binary'
-            # # multi_handle = open(multi_binary_file, 'wb')
+
             for i in range(0, len(cases_mask_sagittal)):
 
                 sagittal_SO = cases_mask_sagittal[i]
@@ -628,26 +650,14 @@ if __name__ == '__main__':
                 multi_view_mask = multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file)
                 brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], multi_view_mask, case_arr[i], cases_dim[i], view='multi')
 
-            #     aggregation = np.load(brain_mask_multi)
-            #     aggregation.tofile(multi_binary_file)
-            # multi_handle.close()
-            # print "Merging aggregation files"
-            # multi_file = '/tmp/aggregation.npy'
-            # merge_multi = np.memmap(binary_file, dtype=np.float32, mode='r+', shape=(x_dim, y_dim, z_dim))
-            # print "Saving training data to disk"
-            # np.save(multi_file, merge_multi)
-            #
-            # print("Splitting aggregation files...")
-            # cases_mask_multi = split(multi_file, split_dim, case_arr, view='multi')
-
             sagittal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_sagittal, case_arr, cases_dim, view='sagittal')
             coronal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_coronal, case_arr, cases_dim, view='coronal')
             axial_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_axial, case_arr, cases_dim, view='axial')
 
 
             for masks in sagittal_mask:
-                print "Mask file = ", masks
-                clear(os.path.dirname(masks))
+               print "Mask file = ", masks
+               clear(os.path.dirname(masks))
 
         # Input in nrrd / nhdr format
         elif filename.endswith(SUFFIX_NHDR) | filename.endswith(SUFFIX_NRRD):
@@ -668,7 +678,8 @@ if __name__ == '__main__':
             dwi_mask_sagittal = predict_mask(b0_normalized, view='sagittal')
             dwi_mask_coronal = predict_mask(b0_normalized, view='coronal')
             dwi_mask_axial = predict_mask(b0_normalized, view='axial')
-            multi_view_mask = multi_view_agg(dwi_mask_sagittal, dwi_mask_coronal, dwi_mask_axial, input_file)
+            cpu = mp.Pool(processes=12)
+            multi_view_mask = cpu.apply(multi_view_agg(dwi_mask_sagittal, dwi_mask_coronal, dwi_mask_axial, input_file))
 
             brain_mask_sagittal = npy_to_nhdr(b0_normalized, dwi_mask_sagittal, input_file, dimensions, view='sagittal')
             brain_mask_coronal = npy_to_nhdr(b0_normalized, dwi_mask_coronal, input_file, dimensions, view='coronal')

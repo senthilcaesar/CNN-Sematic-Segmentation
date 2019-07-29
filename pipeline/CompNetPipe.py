@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	07/24/2019
+# Last Updated: 	07/29/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -25,7 +25,7 @@ CompNet.py
 # pylint: disable=invalid-name
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 import re
 import sys
 import argparse
@@ -132,20 +132,22 @@ def predict_mask(input_file, view='default'):
     if input_file.endswith(SUFFIX_NIFTI_GZ):
         x_test = nib.load(input_file).get_data()
         if view == 'coronal':
-            x_test = np.swapaxes(x_test, 0, 1)  # coronal view
+            x_test = np.swapaxes(x_test, 0, 1)  # sagittal to coronal view
         elif view == 'axial':
-            x_test = np.swapaxes(x_test, 0, 2)  # axial view
+            x_test = np.swapaxes(x_test, 0, 2)  # sagittal to axial view
     else:
         x_test = np.load(input_file)
 
     x_test = x_test.reshape(x_test.shape + (1,))
     predict_x = loaded_model.predict(x_test, verbose=1)
     SO = predict_x[5]  # Segmentation Output
+    del predict_x
 
-    # if view == 'coronal':
-    #     SO = np.swapaxes(SO, 1, 0)
-    # elif view == 'axial':
-    #     SO = np.swapaxes(SO, 2, 0)
+    if input_file.endswith(SUFFIX_NIFTI_GZ):
+        if view == 'coronal':
+            SO = np.swapaxes(SO, 1, 0) # coronal to sagittal view
+        elif view == 'axial':
+            SO = np.swapaxes(SO, 2, 0) # axial to sagittal view
     np.save(output_file, SO)
     return output_file
 
@@ -265,7 +267,7 @@ def resample(nii_file):
 
     input_file = nii_file
     case_name = os.path.basename(input_file)
-    output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-linear.nii.gz'
+    output_name = 'Comp_' + case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-linear.nii.gz'
     output_file = os.path.join(os.path.dirname(input_file), output_name)
     bashCommand_resample = "ResampleImage 3 " + input_file + " " + output_file + " " + "256x246x246 1"
     output2 = subprocess.check_output(bashCommand_resample, shell=True)
@@ -359,10 +361,10 @@ def normalize(b0_resampled):
     output_file = os.path.join(os.path.dirname(input_file), output_name)
     img = nib.load(b0_resampled)
     imgU16 = img.get_data().astype(np.float32)
-    # p = np.percentile(imgU16, 99)
-    # data = imgU16 / p
-    # data[data > 1] = 1
-    # data[data < 0] = sys.float_info.epsilons
+    #p = np.percentile(imgU16, 99)
+    #data = imgU16 / p
+    #data[data > 1] = 1
+    #data[data < 0] = sys.float_info.epsilon
     data = imgU16
     npad = ((0, 0), (5, 5), (5, 5))
     image = np.pad(data, pad_width=npad, mode='constant', constant_values=0)
@@ -419,31 +421,26 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
             process = subprocess.Popen(fill_cmd.split(), stdout=subprocess.PIPE)
             output, error = process.communicate()
 
-            case_name = os.path.basename(filled_file)
-            clean_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-cleaned.nii.gz'
-            cleaned_file = os.path.join(output_dir, clean_name)
-            clean_cmd = "maskfilter -force -scale 5 " + filled_file + " clean " + cleaned_file
-            process = subprocess.Popen(clean_cmd.split(), stdout=subprocess.PIPE)
-            output, error = process.communicate()
-
-
-            output_nhdr = sub_name[i][:len(sub_name[i]) - (len(SUFFIX_NHDR) + 1)] + '-' + view + '_BrainMask.nhdr'
+            output_nhdr = sub_name[i][:len(sub_name[i]) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-' + view + '_BrainMask.nii.gz'
             output_folder = os.path.join(output_dir, output_nhdr)
-            bashCommand = 'ConvertBetweenFileFormats ' + cleaned_file + " " + output_folder
+            #bashCommand = 'ConvertBetweenFileFormats ' + filled_file + " " + output_folder
+            bashCommand = 'mv ' + filled_file + " " + output_folder
             process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
             output, error = process.communicate()
             output_mask.append(output_folder)
     else:
-        image_space = nib.load(b0_normalized)
+        image_space = nib.load(b0_normalized_cases)
         predict = np.load(cases_mask_arr)
         predict[predict >= 0.5] = 1
         predict[predict < 0.5] = 0
-        output_dir = os.path.dirname(b0_normalized)
+        output_dir = os.path.dirname(b0_normalized_cases)
         case_mask_name = os.path.basename(cases_mask_arr)
         image_predict = nib.Nifti1Image(predict, image_space.affine, image_space.header)
         output_name = case_mask_name[:len(case_mask_name) - len(SUFFIX_NPY)] + 'nii.gz'
         output_file = os.path.join(output_dir, output_name)
         nib.save(image_predict, output_file)
+
+
         case_name = os.path.basename(output_file)
         downsample_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-downsampled.nii.gz'
         downsample_file = os.path.join(output_dir, downsample_name)
@@ -458,16 +455,10 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
         process = subprocess.Popen(fill_cmd.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
-        case_name = os.path.basename(filled_file)
-        clean_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-cleaned.nii.gz'
-        cleaned_file = os.path.join(output_dir, clean_name)
-        clean_cmd = "maskfilter -force -scale 5 " + filled_file + " clean " + cleaned_file
-        process = subprocess.Popen(clean_cmd.split(), stdout=subprocess.PIPE)
-        output, error = process.communicate()
-
-        output_mask_name = sub_name[:len(sub_name) - (len(SUFFIX_NHDR) + 1)] + '-' + view + '_BrainMask.nhdr'
+        output_mask_name = sub_name[:len(sub_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-' + view + '_BrainMask.nii.gz'
         output_mask = os.path.join(output_dir, output_mask_name)
-        bashCommand = 'ConvertBetweenFileFormats ' + cleaned_file + " " + output_mask
+        bashCommand = 'mv ' + filled_file + " " + output_mask
+        #bashCommand = 'ConvertBetweenFileFormats ' + filled_file + " " + output_mask
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
@@ -477,7 +468,8 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
 def clear(directory):
     print "Cleaning files ..."
     for filename in os.listdir(directory):
-        if filename.startswith('dwi') | filename.endswith(SUFFIX_NPY) | filename.endswith(SUFFIX_NIFTI_GZ):
+        if filename.startswith('Comp') | filename.endswith(SUFFIX_NPY) | \
+                filename.endswith('_SO.nii.gz') | filename.endswith('downsampled.nii.gz') | filename.endswith('multi-mask.nii.gz'):
             os.unlink(directory + '/' + filename)
 
 
@@ -560,9 +552,9 @@ if __name__ == '__main__':
             with open(filename) as f:
                 case_arr = f.read().splitlines()
 
-            binary_file_s = '/tmp/binary_s'
-            binary_file_c = '/tmp/binary_c'
-            binary_file_a = '/tmp/binary_a'
+            binary_file_s = '/rfanfs/pnl-zorro/home/sq566/tmp/binary_s'
+            binary_file_c = '/rfanfs/pnl-zorro/home/sq566/tmp/binary_c'
+            binary_file_a = '/rfanfs/pnl-zorro/home/sq566/tmp/binary_a'
 
             f_handle_s = open(binary_file_s, 'wb')
             f_handle_c = open(binary_file_c, 'wb')
@@ -574,6 +566,7 @@ if __name__ == '__main__':
             split_dim = []
             b0_normalized_cases = []
             cases_dim = []
+            count = 0
             for subjects in case_arr:
                 input_file = subjects
                 f = pathlib.Path(input_file)
@@ -583,20 +576,21 @@ if __name__ == '__main__':
                     directory = os.path.dirname(input_file)
                     input_file = os.path.basename(input_file)
 
-                    if not check_gradient(os.path.join(directory, input_file)):
-                        b0_nhdr = extract_b0(input_file)
-                    else:
-                        b0_nhdr = os.path.join(directory, input_file)
+                    #if not check_gradient(os.path.join(directory, input_file)):
+                    #    b0_nhdr = extract_b0(input_file)
+                    #else:
+                        #b0_nhdr = os.path.join(directory, input_file)
 
-                    b0_nii = nhdr_to_nifti(b0_nhdr)
+                    #b0_nii = nhdr_to_nifti(b0_nhdr)
+                    b0_nii = os.path.join(directory, input_file)
                     dimensions = get_dimension(b0_nii)
                     cases_dim.append(dimensions)
                     x_dim += int(dimensions[0])
                     split_dim.append(int(dimensions[0]))
-                    b0_resampled = resample(b0_nii)
-                    b0_normalized = normalize(b0_resampled)
-                    b0_normalized_cases.append(b0_normalized)
-                    img = nib.load(b0_normalized)
+                    #b0_resampled = resample(b0_nii)
+                    #b0_normalized = normalize(b0_resampled)
+                    b0_normalized_cases.append(b0_nii)
+                    img = nib.load(b0_nii)
 
 
                     imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
@@ -608,6 +602,8 @@ if __name__ == '__main__':
                     imgU16_sagittal.tofile(f_handle_s)
                     imgU16_coronal.tofile(f_handle_c)
                     imgU16_axial.tofile(f_handle_a)
+                    print "Case completed = ", count
+                    count += 1
 
                 else:
                     print "File not found ", input_file
@@ -633,7 +629,7 @@ if __name__ == '__main__':
             dwi_mask_coronal = predict_mask(cases_file_c, view='coronal')
             dwi_mask_axial = predict_mask(cases_file_a, view='axial')
 
-            print("Splitting files....")
+            print "Splitting files...."
 
             cases_mask_sagittal = split(dwi_mask_sagittal, case_arr, view='sagittal')
             cases_mask_coronal = split(dwi_mask_coronal, case_arr, view='coronal')
@@ -648,6 +644,7 @@ if __name__ == '__main__':
                 input_file = case_arr[i]
 
                 multi_view_mask = multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file)
+                #print(b0_normalized_cases[i])
                 brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], multi_view_mask, case_arr[i], cases_dim[i], view='multi')
 
             sagittal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_sagittal, case_arr, cases_dim, view='sagittal')
@@ -660,17 +657,22 @@ if __name__ == '__main__':
                clear(os.path.dirname(masks))
 
         # Input in nrrd / nhdr format
-        elif filename.endswith(SUFFIX_NHDR) | filename.endswith(SUFFIX_NRRD):
+        elif filename.endswith(SUFFIX_NHDR) | filename.endswith(SUFFIX_NRRD) | filename.endswith(SUFFIX_NIFTI_GZ):
             print "Nrrd / Nhdr file format"
             input_file = filename
             asb_path = os.path.abspath(input_file)
             directory = os.path.dirname(asb_path)
             input_file = os.path.basename(asb_path)
-            if not check_gradient(os.path.join(directory, input_file)):
-                b0_nhdr = extract_b0(os.path.join(directory, input_file))
-            else:
-                b0_nhdr = asb_path
-            b0_nii = nhdr_to_nifti(b0_nhdr)
+            #if not check_gradient(os.path.join(directory, input_file)):
+            #    b0_nhdr = extract_b0(os.path.join(directory, input_file))
+            #else:
+            #    b0_nhdr = asb_path
+
+            # if filename.endswith(SUFFIX_NHDR) | filename.endswith(SUFFIX_NRRD):
+            #
+            #     b0_nii = nhdr_to_nifti(b0_nhdr)
+            # else:
+            b0_nii = os.path.join(directory, input_file)
             dimensions = get_dimension(b0_nii)
             b0_resampled = resample(b0_nii)
             b0_normalized = normalize(b0_resampled)
@@ -678,18 +680,23 @@ if __name__ == '__main__':
             dwi_mask_sagittal = predict_mask(b0_normalized, view='sagittal')
             dwi_mask_coronal = predict_mask(b0_normalized, view='coronal')
             dwi_mask_axial = predict_mask(b0_normalized, view='axial')
-            cpu = mp.Pool(processes=12)
-            multi_view_mask = cpu.apply(multi_view_agg(dwi_mask_sagittal, dwi_mask_coronal, dwi_mask_axial, input_file))
 
-            brain_mask_sagittal = npy_to_nhdr(b0_normalized, dwi_mask_sagittal, input_file, dimensions, view='sagittal')
-            brain_mask_coronal = npy_to_nhdr(b0_normalized, dwi_mask_coronal, input_file, dimensions, view='coronal')
-            brain_mask_axial = npy_to_nhdr(b0_normalized, dwi_mask_axial, input_file, dimensions, view='axial')
-            brain_mask_multi = npy_to_nhdr(b0_normalized, multi_view_mask, input_file, dimensions, view='multi')
+            multi_view_mask = multi_view_agg(dwi_mask_sagittal, dwi_mask_coronal, dwi_mask_axial, input_file)
+
+            #print(multi_view_mask)
+            #print(b0_normalized)
+            #print(input_file)
+            #print(dimensions)
+
+            brain_mask_sagittal = npy_to_nhdr(b0_nii, dwi_mask_sagittal, input_file, dimensions, view='sagittal')
+            brain_mask_coronal = npy_to_nhdr(b0_nii, dwi_mask_coronal, input_file, dimensions, view='coronal')
+            brain_mask_axial = npy_to_nhdr(b0_nii, dwi_mask_axial, input_file, dimensions, view='axial')
+            brain_mask_multi = npy_to_nhdr(b0_nii, multi_view_mask, input_file, dimensions, view='multi')
 
             clear(directory)
             print "Mask file = ", brain_mask_multi
-            end_t = datetime.datetime.now()
-            total_t = end_t - start_t
-            print("Time taken = ", total_t.seconds, "sec")
-        else:
-            print "Invalid file format, Input file should be in the format *.nii.gz, *.nii, *.nrrd, *.nhdr"
+
+        end_t = datetime.datetime.now()
+        total_t = end_t - start_t
+        print("Time Taken in sec = ", total_t.seconds)
+    

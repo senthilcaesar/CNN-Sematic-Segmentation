@@ -15,3 +15,5 @@ CompNet: Complementary Segmentation Network for Brain MRI Extraction. To view th
 11) predict.py
 12) split_so.py
 13) view.py
+
+![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/multiview.png)

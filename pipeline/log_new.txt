@@ -1,0 +1,76 @@
+Total elapsed time: 475.4
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00007-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00009-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00011-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00015-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00007-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00015-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00009-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00011-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00016-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00018-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00019-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00024-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00018-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00032-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00016-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00024-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00019-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00041-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00042-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00044-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00032-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00049-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00041-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00071-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00042-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00044-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00079-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00086-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00049-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00095-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00071-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00097-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00079-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00099-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00086-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00100-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00095-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00103-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00097-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00107-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00099-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00108-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00100-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00115-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00103-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00121-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00107-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00123-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00108-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Warping /data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/001_00138-dwi-Ed-aligned.nhdr diffusion measures to standard space
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00115-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00121-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00123-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Moving image '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00138-dwi-Ed-aligned_FA.nii.gz' does not exist.  See usage: '/data/pnl/soft/pnlpipe3/pnlpipe/soft_dir/ANTs-bin-ca32228/antsRegistrationSyNQuick.sh -h 1'
+Traceback (most recent call last):
+  File "/data/pnl/soft/pnlpipe3/miniconda3/envs/pnlpipe3/lib/python3.6/site-packages/nibabel/loadsave.py", line 40, in load
+    stat_result = os.stat(filename)
+FileNotFoundError: [Errno 2] No such file or directory: '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00007-dwi-Ed-aligned_InMNI_FA.nii.gz'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/pnl/soft/pnlpipe3/dMRIharmonization/lib/harmonization.py", line 405, in <module>
+    pipeline.run()
+  File "/data/pnl/soft/pnlpipe3/miniconda3/envs/pnlpipe3/lib/python3.6/site-packages/plumbum/cli/application.py", line 572, in run
+    retcode = inst.main(*tailargs)
+  File "/data/pnl/soft/pnlpipe3/dMRIharmonization/lib/harmonization.py", line 401, in main
+    self.post_debug()
+  File "/data/pnl/soft/pnlpipe3/dMRIharmonization/lib/harmonization.py", line 330, in post_debug
+    target_mean_before = analyzeStat(self.tar_unproc_csv)
+  File "/data/pnl/soft/pnlpipe3/dMRIharmonization/lib/debug_fa.py", line 163, in analyzeStat
+    data= load(faImg).get_data()
+  File "/data/pnl/soft/pnlpipe3/miniconda3/envs/pnlpipe3/lib/python3.6/site-packages/nibabel/loadsave.py", line 42, in load
+    raise FileNotFoundError("No such file or no access: '%s'" % filename)
+FileNotFoundError: No such file or no access: '/data/pnl/home/sq566/Suheyla_Harmonization/target_Szeszko/training_x/dti/001_00007-dwi-Ed-aligned_InMNI_FA.nii.gz'

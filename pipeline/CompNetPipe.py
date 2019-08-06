@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	07/29/2019
+# Last Updated: 	08/06/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -25,7 +25,7 @@ CompNet.py
 # pylint: disable=invalid-name
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 import re
 import sys
 import argparse
@@ -216,7 +216,7 @@ def multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file):
     data = np.array(prob_vector)
     shape = (256, 256, 256)
     SO = data.reshape(shape)
-
+    SO = SO.astype('float32')
     np.save(output_file, SO)
     return output_file
 
@@ -361,11 +361,10 @@ def normalize(b0_resampled):
     output_file = os.path.join(os.path.dirname(input_file), output_name)
     img = nib.load(b0_resampled)
     imgU16 = img.get_data().astype(np.float32)
-    #p = np.percentile(imgU16, 99)
-    #data = imgU16 / p
-    #data[data > 1] = 1
-    #data[data < 0] = sys.float_info.epsilon
-    data = imgU16
+    p = np.percentile(imgU16, 99)
+    data = imgU16 / p
+    data[data > 1] = 1
+    data[data < 0] = sys.float_info.epsilon
     npad = ((0, 0), (5, 5), (5, 5))
     image = np.pad(data, pad_width=npad, mode='constant', constant_values=0)
     image_dwi = nib.Nifti1Image(image, img.affine, img.header)
@@ -552,9 +551,11 @@ if __name__ == '__main__':
             with open(filename) as f:
                 case_arr = f.read().splitlines()
 
-            binary_file_s = '/rfanfs/pnl-zorro/home/sq566/tmp/binary_s'
-            binary_file_c = '/rfanfs/pnl-zorro/home/sq566/tmp/binary_c'
-            binary_file_a = '/rfanfs/pnl-zorro/home/sq566/tmp/binary_a'
+
+            unique = filename[:len(filename) - (len(SUFFIX_TXT)+1)]
+            binary_file_s = '/rfanfs/pnl-zorro/home/sq566/tmp/' + unique + '_binary_s'
+            binary_file_c = '/rfanfs/pnl-zorro/home/sq566/tmp/'+ unique + '_binary_c'
+            binary_file_a = '/rfanfs/pnl-zorro/home/sq566/tmp/'+ unique + '_binary_a'
 
             f_handle_s = open(binary_file_s, 'wb')
             f_handle_c = open(binary_file_c, 'wb')
@@ -570,6 +571,7 @@ if __name__ == '__main__':
             for subjects in case_arr:
                 input_file = subjects
                 f = pathlib.Path(input_file)
+
                 if f.exists():
                     input_file = str(f)
                     asb_path = os.path.abspath(input_file)
@@ -587,10 +589,10 @@ if __name__ == '__main__':
                     cases_dim.append(dimensions)
                     x_dim += int(dimensions[0])
                     split_dim.append(int(dimensions[0]))
-                    #b0_resampled = resample(b0_nii)
-                    #b0_normalized = normalize(b0_resampled)
-                    b0_normalized_cases.append(b0_nii)
-                    img = nib.load(b0_nii)
+                    b0_resampled = resample(b0_nii)
+                    b0_normalized = normalize(b0_resampled)
+                    b0_normalized_cases.append(b0_normalized)
+                    img = nib.load(b0_normalized)
 
 
                     imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
@@ -612,9 +614,9 @@ if __name__ == '__main__':
             f_handle_c.close()
             f_handle_a.close()
             print "Merging npy files"
-            cases_file_s = '/rfanfs/pnl-zorro/home/sq566/tmp/casefile-sagittal.npy'
-            cases_file_c = '/rfanfs/pnl-zorro/home/sq566/tmp/casefile-coronal.npy'
-            cases_file_a = '/rfanfs/pnl-zorro/home/sq566/tmp/casefile-axial.npy'
+            cases_file_s = '/rfanfs/pnl-zorro/home/sq566/tmp/'+ unique + '-casefile-sagittal.npy'
+            cases_file_c = '/rfanfs/pnl-zorro/home/sq566/tmp/'+ unique + '-casefile-coronal.npy'
+            cases_file_a = '/rfanfs/pnl-zorro/home/sq566/tmp/'+ unique + '-casefile-axial.npy'
 
             merge_s = np.memmap(binary_file_s, dtype=np.float32, mode='r+', shape=(256 * len(cases_dim), y_dim, z_dim))
             merge_c = np.memmap(binary_file_c, dtype=np.float32, mode='r+', shape=(256 * len(cases_dim), y_dim, z_dim))
@@ -648,8 +650,8 @@ if __name__ == '__main__':
                 brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], multi_view_mask, case_arr[i], cases_dim[i], view='multi')
 
             sagittal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_sagittal, case_arr, cases_dim, view='sagittal')
-            coronal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_coronal, case_arr, cases_dim, view='coronal')
-            axial_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_axial, case_arr, cases_dim, view='axial')
+            #coronal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_coronal, case_arr, cases_dim, view='coronal')
+            #axial_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_axial, case_arr, cases_dim, view='axial')
 
 
             for masks in sagittal_mask:
@@ -688,12 +690,12 @@ if __name__ == '__main__':
             #print(input_file)
             #print(dimensions)
 
-            brain_mask_sagittal = npy_to_nhdr(b0_nii, dwi_mask_sagittal, input_file, dimensions, view='sagittal')
-            brain_mask_coronal = npy_to_nhdr(b0_nii, dwi_mask_coronal, input_file, dimensions, view='coronal')
-            brain_mask_axial = npy_to_nhdr(b0_nii, dwi_mask_axial, input_file, dimensions, view='axial')
-            brain_mask_multi = npy_to_nhdr(b0_nii, multi_view_mask, input_file, dimensions, view='multi')
+            brain_mask_sagittal = npy_to_nhdr(b0_normalized, dwi_mask_sagittal, input_file, dimensions, view='sagittal')
+            brain_mask_coronal = npy_to_nhdr(b0_normalized, dwi_mask_coronal, input_file, dimensions, view='coronal')
+            brain_mask_axial = npy_to_nhdr(b0_normalized, dwi_mask_axial, input_file, dimensions, view='axial')
+            brain_mask_multi = npy_to_nhdr(b0_normalized, multi_view_mask, input_file, dimensions, view='multi')
 
-            clear(directory)
+            #clear(directory)
             print "Mask file = ", brain_mask_multi
 
         end_t = datetime.datetime.now()

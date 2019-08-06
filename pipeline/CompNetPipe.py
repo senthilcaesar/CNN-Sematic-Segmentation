@@ -39,6 +39,7 @@ import multiprocessing as mp
 from os import path
 from keras.models import load_model
 from keras.models import model_from_json
+from __future__ import division
 import cv2
 import sys
 
@@ -220,6 +221,41 @@ def multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file):
     np.save(output_file, SO)
     return output_file
 
+
+def multi_view(sagittal_SO, coronal_SO, axial_SO, input_file):
+    x = np.load(sagittal_SO)
+    y = np.load(coronal_SO)
+    z = np.load(axial_SO)
+
+    m, n = x.shape[::2]
+    x = x.transpose(0, 3, 1, 2).reshape(m, -1, n)
+
+    m, n = y.shape[::2]
+    y = y.transpose(0, 3, 1, 2).reshape(m, -1, n)
+
+    m, n = z.shape[::2]
+    z = z.transpose(0, 3, 1, 2).reshape(m, -1, n)
+
+    x[x >= 0.5] = 1
+    x[x < 0.5] = 0
+    y[y >= 0.5] = 1
+    y[y < 0.5] = 0
+    z[z >= 0.5] = 1
+    z[z < 0.5] = 0
+
+    XplusY = np.add(x, y)
+    multi_view = np.add(XplusY, z)
+    multi_view = multi_view / 3.0
+    multi_view[multi_view >= 0.5] = 1
+    multi_view[multi_view < 0.5] = 0
+
+    case_name = os.path.basename(input_file)
+    output_name = case_name[:len(case_name) - (len(SUFFIX_NHDR) + 1)] + '-multi-mask.npy'
+    output_file = os.path.join(os.path.dirname(input_file), output_name)
+
+    SO = multi_view.astype('float32')
+    np.save(output_file, SO)
+    return output_file
 
 def check_gradient(Nhdr_file):
     """

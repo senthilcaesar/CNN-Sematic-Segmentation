@@ -1,7 +1,8 @@
+from __future__ import division
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	08/06/2019
+# Last Updated: 	08/08/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -25,7 +26,7 @@ CompNet.py
 # pylint: disable=invalid-name
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 import re
 import sys
 import argparse
@@ -39,7 +40,7 @@ import multiprocessing as mp
 from os import path
 from keras.models import load_model
 from keras.models import model_from_json
-from __future__ import division
+
 import cv2
 import sys
 
@@ -222,7 +223,7 @@ def multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file):
     return output_file
 
 
-def multi_view(sagittal_SO, coronal_SO, axial_SO, input_file):
+def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file):
     x = np.load(sagittal_SO)
     y = np.load(coronal_SO)
     z = np.load(axial_SO)
@@ -236,18 +237,14 @@ def multi_view(sagittal_SO, coronal_SO, axial_SO, input_file):
     m, n = z.shape[::2]
     z = z.transpose(0, 3, 1, 2).reshape(m, -1, n)
 
-    x[x >= 0.5] = 1
-    x[x < 0.5] = 0
-    y[y >= 0.5] = 1
-    y[y < 0.5] = 0
-    z[z >= 0.5] = 1
-    z[z < 0.5] = 0
+    x = np.multiply(x, 0.1)
+    y = np.multiply(y, 0.4)
+    z = np.multiply(z, 0.5)
 
     XplusY = np.add(x, y)
     multi_view = np.add(XplusY, z)
-    multi_view = multi_view / 3.0
-    multi_view[multi_view >= 0.5] = 1
-    multi_view[multi_view < 0.5] = 0
+    multi_view[multi_view > 0.45] = 1
+    multi_view[multi_view <= 0.45] = 0
 
     case_name = os.path.basename(input_file)
     output_name = case_name[:len(case_name) - (len(SUFFIX_NHDR) + 1)] + '-multi-mask.npy'
@@ -256,6 +253,7 @@ def multi_view(sagittal_SO, coronal_SO, axial_SO, input_file):
     SO = multi_view.astype('float32')
     np.save(output_file, SO)
     return output_file
+
 
 def check_gradient(Nhdr_file):
     """
@@ -456,7 +454,13 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
             process = subprocess.Popen(fill_cmd.split(), stdout=subprocess.PIPE)
             output, error = process.communicate()
 
-            output_nhdr = sub_name[i][:len(sub_name[i]) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-' + view + '_BrainMask.nii.gz'
+            subject_name = os.path.basename(sub_name[i])
+            if subject_name.endswith(SUFFIX_NIFTI_GZ):
+                format = SUFFIX_NIFTI_GZ
+            else:
+                format = SUFFIX_NIFTI
+
+            output_nhdr = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
             output_folder = os.path.join(output_dir, output_nhdr)
             #bashCommand = 'ConvertBetweenFileFormats ' + filled_file + " " + output_folder
             bashCommand = 'mv ' + filled_file + " " + output_folder
@@ -490,7 +494,13 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
         process = subprocess.Popen(fill_cmd.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
-        output_mask_name = sub_name[:len(sub_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-' + view + '_BrainMask.nii.gz'
+        if sub_name.endswith(SUFFIX_NIFTI_GZ):
+            format = SUFFIX_NIFTI_GZ
+        else:
+            format = SUFFIX_NIFTI
+
+        output_mask_name = sub_name[:len(sub_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
+
         output_mask = os.path.join(output_dir, output_mask_name)
         bashCommand = 'mv ' + filled_file + " " + output_mask
         #bashCommand = 'ConvertBetweenFileFormats ' + filled_file + " " + output_mask
@@ -588,7 +598,10 @@ if __name__ == '__main__':
                 case_arr = f.read().splitlines()
 
 
-            unique = filename[:len(filename) - (len(SUFFIX_TXT)+1)]
+            TXT_file = os.path.basename(filename)
+            print(TXT_file)
+            unique = TXT_file[:len(TXT_file) - (len(SUFFIX_TXT)+1)]
+            print(unique)
             binary_file_s = '/rfanfs/pnl-zorro/home/sq566/tmp/' + unique + '_binary_s'
             binary_file_c = '/rfanfs/pnl-zorro/home/sq566/tmp/'+ unique + '_binary_c'
             binary_file_a = '/rfanfs/pnl-zorro/home/sq566/tmp/'+ unique + '_binary_a'
@@ -681,13 +694,15 @@ if __name__ == '__main__':
 
                 input_file = case_arr[i]
 
-                multi_view_mask = multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file)
+                #multi_view_mask = multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file)
+                multi_view_mask = multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file)
+
                 #print(b0_normalized_cases[i])
                 brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], multi_view_mask, case_arr[i], cases_dim[i], view='multi')
 
             sagittal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_sagittal, case_arr, cases_dim, view='sagittal')
-            #coronal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_coronal, case_arr, cases_dim, view='coronal')
-            #axial_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_axial, case_arr, cases_dim, view='axial')
+            coronal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_coronal, case_arr, cases_dim, view='coronal')
+            axial_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_axial, case_arr, cases_dim, view='axial')
 
 
             for masks in sagittal_mask:

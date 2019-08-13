@@ -1,14 +1,15 @@
+#!/rfanfs/pnl-zorro/home/suheyla/Tools/tensorflow-prebuiltin-pycharm/bin/python
 from __future__ import division
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	08/08/2019
+# Last Updated: 	08/13/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
 """
 CompNet.py
-~~~~~~~~~
+~~~~~~~
 1)  Accepts the diffusion image in *.nhdr format
 2)  Checks if the Image axis is in the correct order
 3)  Extracts b0 Image
@@ -25,8 +26,13 @@ CompNet.py
 
 # pylint: disable=invalid-name
 import os
-
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ['LD_LIBRARY_PATH'] = "/rfanfs/pnl-zorro/home/sq566/Downloads/conda/lib"
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress tensor flow message
+import tensorflow as tf
+if tf.test.is_gpu_available():
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+else:
+    os.environ["CUDA_VISIBLE_DEVICES"] = ""
 import re
 import sys
 import argparse
@@ -40,17 +46,13 @@ import multiprocessing as mp
 from os import path
 from keras.models import load_model
 from keras.models import model_from_json
-
 import cv2
 import sys
-
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress tensor flow message
 import keras
 import scipy as sp
 import scipy.misc, scipy.ndimage.interpolation
 import os
 from keras import losses
-import tensorflow as tf
 from keras.models import Model
 from keras.layers import Input, merge, concatenate, Conv2D, MaxPooling2D, \
     Activation, UpSampling2D, Dropout, Conv2DTranspose, add, multiply
@@ -78,7 +80,6 @@ def predict_mask(input_file, view='default'):
     input_file : str
                  (single case filename which is stored in disk in *.nii.gz format) or 
                  (list of cases, all appended to 3d numpy array stored in disk in *.npy format)
-
     view       : str
                  Three principal axes ( Sagittal, Coronal and Axial )
     
@@ -166,13 +167,11 @@ def multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file):
                      axial view predicted mask filename which is in 3d numpy *.npy format stored in disk
        input_file  : str
                      single input case filename which is in *.nhdr format
-
     Returns
     -------
        output_file : str
                      Segmentation file name obtained by combining the probability maps from all the three
                      segmentations ( sagittal_SO, coronal_SO, axial_SO ) . Stored in disk in 3d numpy *.npy format
-
     """
     x = np.load(sagittal_SO)
     y = np.load(coronal_SO)
@@ -251,6 +250,7 @@ def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file):
     output_file = os.path.join(os.path.dirname(input_file), output_name)
 
     SO = multi_view.astype('float32')
+    SO = scipy.ndimage.rotate(SO, 180, axes=(0, 1))
     np.save(output_file, SO)
     return output_file
 
@@ -645,6 +645,7 @@ if __name__ == '__main__':
 
 
                     imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
+                    imgU16_sagittal = scipy.ndimage.rotate(imgU16_sagittal, 180, axes=(0, 1))
 
                     imgU16_coronal = np.swapaxes(imgU16_sagittal, 0, 1)  # coronal view
 
@@ -751,5 +752,4 @@ if __name__ == '__main__':
 
         end_t = datetime.datetime.now()
         total_t = end_t - start_t
-        print("Time Taken in sec = ", total_t.seconds)
-    
+print("Time Taken in sec = ", total_t.seconds)

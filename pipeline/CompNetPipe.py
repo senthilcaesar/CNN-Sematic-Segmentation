@@ -3,43 +3,45 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	08/13/2019
+# Last Updated: 	08/14/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
 """
 CompNet.py
-~~~~~~~
-1)  Accepts the diffusion image in *.nhdr format
-2)  Checks if the Image axis is in the correct order
+~~~~~~
+1)  Accepts the diffusion image in *.nhdr,*.nrrd,*.nii.gz,*.nii format
+2)  Checks if the Image axis is in the correct order for *.nhdr and *.nrrd file
 3)  Extracts b0 Image
 4)  Converts nhdr to nii.gz
 5)  Re sample nii.gz file to 246 x 246
 6)  Pads the Image adding zeros to 256 x 256
 7)  Normalize the Image by 99th percentile
-8)  Neural network brain mask prediction
+8)  Neural network brain mask prediction across the 3 principal axis
 9)  Perform Multi View Aggregation
-10) Converts npy to nhdr
+10) Converts npy to nhdr,nrrd,nii,nii.gz
 11) Down sample to original resolution
 12) Cleaning
 """
 
+
 # pylint: disable=invalid-name
 import os
-os.environ['LD_LIBRARY_PATH'] = "/rfanfs/pnl-zorro/home/sq566/Downloads/conda/lib"
+import os.path
+from os import path
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress tensor flow message
 import tensorflow as tf
 if tf.test.is_gpu_available():
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 else:
     os.environ["CUDA_VISIBLE_DEVICES"] = ""
 import re
 import sys
+import subprocess
 import argparse
 import datetime
 import os.path
 import pathlib
-import subprocess
 import nibabel as nib
 import numpy as np
 import multiprocessing as mp
@@ -331,7 +333,7 @@ def get_dimension(nii_file):
     return dimensions
 
 
-def extract_b0(Nhdr_file):
+def extract_b0(input_file):
     """
     Parameters
     ---------
@@ -344,11 +346,36 @@ def extract_b0(Nhdr_file):
                   Uses "bse.sh" program
     """
     print "Extracting b0"
-    input_file = Nhdr_file
+    case_dir = os.path.dirname(input_file)
     case_name = os.path.basename(input_file)
     output_name = 'dwib0_' + case_name
     output_file = os.path.join(os.path.dirname(input_file), output_name)
-    bashCommand = 'bse.sh -i ' + input_file + ' -o ' + output_file + ' &>/dev/null'
+    if case_name.endswith(SUFFIX_NRRD) | case_name.endswith(SUFFIX_NRRD):
+        bashCommand = 'bse.sh -i ' + input_file + ' -o ' + output_file + ' &>/dev/null'
+    else:
+        if case_name.endswith(SUFFIX_NIFTI_GZ):
+            case_prefix = case_name[:len(case_name) - len(SUFFIX_NIFTI_GZ)]
+        else:
+            case_prefix = case_name[:len(case_name) - len(SUFFIX_NIFTI)]
+
+        bvec_file = case_dir + '/' + case_prefix + 'bvec'
+        bval_file = case_dir + '/' + case_prefix + 'bval'
+
+        if path.exists(bvec_file):
+            print "File exist ", bvec_file
+        else:
+            print "File not found ", bvec_file
+            sys.exit(1)
+
+        if path.exists(bval_file):
+            print "File exist ", bval_file
+        else:
+            print "File not found ", bval_file
+            sys.exit(1)
+
+        bashCommand = 'dwiextract -force -fslgrad ' + bvec_file + ' ' + bval_file + ' -bzero ' + \
+                      input_file + ' ' + output_file + ' &>/dev/null'
+
     output = subprocess.check_output(bashCommand, shell=True)
     return output_file
 
@@ -627,13 +654,17 @@ if __name__ == '__main__':
                     directory = os.path.dirname(input_file)
                     input_file = os.path.basename(input_file)
 
-                    #if not check_gradient(os.path.join(directory, input_file)):
-                    #    b0_nhdr = extract_b0(input_file)
-                    #else:
-                        #b0_nhdr = os.path.join(directory, input_file)
+                    if input_file.endswith(SUFFIX_NRRD) | input_file.endswith(SUFFIX_NHDR):
+                        if not check_gradient(os.path.join(directory, input_file)):
+                           b0_nhdr = extract_b0(input_file)
+                        else:
+                            b0_nhdr = os.path.join(directory, input_file)
 
-                    #b0_nii = nhdr_to_nifti(b0_nhdr)
-                    b0_nii = os.path.join(directory, input_file)
+                        b0_nii = nhdr_to_nifti(b0_nhdr)
+                    else:
+                        b0_nii = extract_b0(os.path.join(directory, input_file))
+
+                    #b0_nii = os.path.join(directory, input_file)
                     dimensions = get_dimension(b0_nii)
                     cases_dim.append(dimensions)
                     x_dim += int(dimensions[0])

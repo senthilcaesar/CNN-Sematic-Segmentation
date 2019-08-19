@@ -221,6 +221,7 @@ def multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file):
     shape = (256, 256, 256)
     SO = data.reshape(shape)
     SO = SO.astype('float32')
+    SO = scipy.ndimage.rotate(SO, 180, axes=(0, 1))
     np.save(output_file, SO)
     return output_file
 
@@ -768,9 +769,9 @@ if __name__ == '__main__':
 
             multi_view_mask = multi_view_agg(dwi_mask_sagittal, dwi_mask_coronal, dwi_mask_axial, input_file)
 
-            #brain_mask_sagittal = npy_to_nhdr(b0_normalized, dwi_mask_sagittal, input_file, dimensions, view='sagittal')
-            #brain_mask_coronal = npy_to_nhdr(b0_normalized, dwi_mask_coronal, input_file, dimensions, view='coronal')
-            #brain_mask_axial = npy_to_nhdr(b0_normalized, dwi_mask_axial, input_file, dimensions, view='axial')
+            brain_mask_sagittal = npy_to_nhdr(b0_normalized, dwi_mask_sagittal, input_file, dimensions, view='sagittal')
+            brain_mask_coronal = npy_to_nhdr(b0_normalized, dwi_mask_coronal, input_file, dimensions, view='coronal')
+            brain_mask_axial = npy_to_nhdr(b0_normalized, dwi_mask_axial, input_file, dimensions, view='axial')
             brain_mask_multi = npy_to_nhdr(b0_normalized, multi_view_mask, input_file, dimensions, view='multi')
 
             clear(directory)

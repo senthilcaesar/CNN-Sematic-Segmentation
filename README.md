@@ -7,5 +7,5 @@ Trained Model Weights: https://drive.google.com/open?id=1UwzyaN9V8TVJ9_jZIJjrSsl
 ![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/CompNet%20Arch.png)
 
 
-
+Multi View Aggregation step
 ![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/Multiview.png)

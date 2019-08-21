@@ -613,6 +613,7 @@ if __name__ == '__main__':
 
     rotate_view = False
     if args.rotate == 'True' or args.rotate == 'true':
+        print "Rotation set to 180 degree"
         rotate_view = True
 
     if args.dwi:
@@ -758,7 +759,7 @@ if __name__ == '__main__':
 
                 b0_nii = nhdr_to_nifti(b0_nhdr)
             else:
-                b0_nii = extract_b0(os.path.join(directory, input_file))
+                b0_nii = os.path.join(directory, input_file) #extract_b0(os.path.join(directory, input_file))
 
             dimensions = get_dimension(b0_nii)
             b0_resampled = resample(b0_nii)
@@ -770,9 +771,9 @@ if __name__ == '__main__':
 
             multi_view_mask = multi_view_fast(dwi_mask_sagittal, dwi_mask_coronal, dwi_mask_axial, input_file, rotate_view=rotate_view)
 
-            brain_mask_sagittal = npy_to_nhdr(b0_normalized, dwi_mask_sagittal, input_file, dimensions, view='sagittal')
-            brain_mask_coronal = npy_to_nhdr(b0_normalized, dwi_mask_coronal, input_file, dimensions, view='coronal')
-            brain_mask_axial = npy_to_nhdr(b0_normalized, dwi_mask_axial, input_file, dimensions, view='axial')
+            #brain_mask_sagittal = npy_to_nhdr(b0_normalized, dwi_mask_sagittal, input_file, dimensions, view='sagittal')
+            #brain_mask_coronal = npy_to_nhdr(b0_normalized, dwi_mask_coronal, input_file, dimensions, view='coronal')
+            #brain_mask_axial = npy_to_nhdr(b0_normalized, dwi_mask_axial, input_file, dimensions, view='axial')
             brain_mask_multi = npy_to_nhdr(b0_normalized, multi_view_mask, input_file, dimensions, view='multi')
 
             clear(directory)

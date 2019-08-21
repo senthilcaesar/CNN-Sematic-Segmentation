@@ -75,7 +75,7 @@ SUFFIX_NPY = "npy"
 SUFFIX_TXT = "txt"
 
 
-def predict_mask(input_file, view='default'):
+def predict_mask(input_file, view='default', rotate_view=False):
     """
     Parameters
     ----------
@@ -136,7 +136,8 @@ def predict_mask(input_file, view='default'):
 
     if input_file.endswith(SUFFIX_NIFTI_GZ):
         x_test = nib.load(input_file).get_data()
-        x_test = scipy.ndimage.rotate(x_test, 180, axes=(0, 1))
+        if rotate_view:
+            x_test = scipy.ndimage.rotate(x_test, 180, axes=(0, 1))
         if view == 'coronal':
             x_test = np.swapaxes(x_test, 0, 1)  # sagittal to coronal view
         elif view == 'axial':
@@ -221,12 +222,12 @@ def multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file):
     shape = (256, 256, 256)
     SO = data.reshape(shape)
     SO = SO.astype('float32')
-    SO = scipy.ndimage.rotate(SO, 180, axes=(0, 1))
+    #SO = scipy.ndimage.rotate(SO, 180, axes=(0, 1))
     np.save(output_file, SO)
     return output_file
 
 
-def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file):
+def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file, rotate_view=False):
     x = np.load(sagittal_SO)
     y = np.load(coronal_SO)
     z = np.load(axial_SO)
@@ -254,7 +255,8 @@ def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file):
     output_file = os.path.join(os.path.dirname(input_file), output_name)
 
     SO = multi_view.astype('float32')
-    #SO = scipy.ndimage.rotate(SO, 180, axes=(0, 1))
+    if rotate_view:
+        SO = scipy.ndimage.rotate(SO, 180, axes=(0, 1))
     np.save(output_file, SO)
     return output_file
 
@@ -597,8 +599,8 @@ if __name__ == '__main__':
     parser.add_argument('-i', action='store', dest='dwi', type=str,
                         help='Input Diffusion Image')
 
-    parser.add_argument("-m", dest='multi', type=str,
-                        help="Activate Multi view aggregation mode.")
+    parser.add_argument("-r", dest='rotate', type=str,
+                        help="Rotate 180 degree.")
 
     try:
         args = parser.parse_args()
@@ -609,9 +611,9 @@ if __name__ == '__main__':
     except SystemExit:
         sys.exit(0)
 
-    multi_view = False
-    if args.multi == 'True' or args.multi == 'true':
-        multi_view = True
+    rotate_view = False
+    if args.rotate == 'True' or args.rotate == 'true':
+        rotate_view = True
 
     if args.dwi:
         f = pathlib.Path(args.dwi)
@@ -679,7 +681,8 @@ if __name__ == '__main__':
 
 
                     imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
-                    #imgU16_sagittal = scipy.ndimage.rotate(imgU16_sagittal, 180, axes=(0, 1))
+                    if rotate_view:
+                        imgU16_sagittal = scipy.ndimage.rotate(imgU16_sagittal, 180, axes=(0, 1))
 
                     imgU16_coronal = np.swapaxes(imgU16_sagittal, 0, 1)  # coronal view
 
@@ -711,9 +714,9 @@ if __name__ == '__main__':
             np.save(cases_file_c, merge_c)
             np.save(cases_file_a, merge_a)
 
-            dwi_mask_sagittal = predict_mask(cases_file_s, view='sagittal')
-            dwi_mask_coronal = predict_mask(cases_file_c, view='coronal')
-            dwi_mask_axial = predict_mask(cases_file_a, view='axial')
+            dwi_mask_sagittal = predict_mask(cases_file_s, view='sagittal', rotate_view=rotate_view)
+            dwi_mask_coronal = predict_mask(cases_file_c, view='coronal', rotate_view=rotate_view)
+            dwi_mask_axial = predict_mask(cases_file_a, view='axial', rotate_view=rotate_view)
 
             print "Splitting files...."
 
@@ -730,19 +733,16 @@ if __name__ == '__main__':
                 input_file = case_arr[i]
 
                 #multi_view_mask = multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file)
-                multi_view_mask = multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file)
+                multi_view_mask = multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file, rotate_view=rotate_view)
                 brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], multi_view_mask, case_arr[i], cases_dim[i], view='multi')
+                print "Mask file = ", brain_mask_multi
+                clear(os.path.dirname(brain_mask_multi))
 
-            sagittal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_sagittal, case_arr, cases_dim, view='sagittal')
+            #sagittal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_sagittal, case_arr, cases_dim, view='sagittal')
             #coronal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_coronal, case_arr, cases_dim, view='coronal')
             #axial_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_axial, case_arr, cases_dim, view='axial')
 
-            # Clean files
-            for masks in sagittal_mask:
-               print "Mask file = ", masks
-               clear(os.path.dirname(masks))
-
-        # Input in nrrd / nhdr format
+        # Input in nrrd / nhdr / nii / nii.gz format
         elif filename.endswith(SUFFIX_NHDR) | filename.endswith(SUFFIX_NRRD) | filename.endswith(SUFFIX_NIFTI_GZ):
             print "Nrrd / Nhdr file format"
             input_file = filename
@@ -764,11 +764,11 @@ if __name__ == '__main__':
             b0_resampled = resample(b0_nii)
             b0_normalized = normalize(b0_resampled)
 
-            dwi_mask_sagittal = predict_mask(b0_normalized, view='sagittal')
-            dwi_mask_coronal = predict_mask(b0_normalized, view='coronal')
-            dwi_mask_axial = predict_mask(b0_normalized, view='axial')
+            dwi_mask_sagittal = predict_mask(b0_normalized, view='sagittal', rotate_view=rotate_view)
+            dwi_mask_coronal = predict_mask(b0_normalized, view='coronal', rotate_view=rotate_view)
+            dwi_mask_axial = predict_mask(b0_normalized, view='axial', rotate_view=rotate_view)
 
-            multi_view_mask = multi_view_agg(dwi_mask_sagittal, dwi_mask_coronal, dwi_mask_axial, input_file)
+            multi_view_mask = multi_view_fast(dwi_mask_sagittal, dwi_mask_coronal, dwi_mask_axial, input_file, rotate_view=rotate_view)
 
             brain_mask_sagittal = npy_to_nhdr(b0_normalized, dwi_mask_sagittal, input_file, dimensions, view='sagittal')
             brain_mask_coronal = npy_to_nhdr(b0_normalized, dwi_mask_coronal, input_file, dimensions, view='coronal')

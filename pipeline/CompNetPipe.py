@@ -91,7 +91,7 @@ def predict_mask(input_file, view='default', rotate_view=False):
                   returns the neural network predicted filename which is stored
                   in disk in 3d numpy array *.npy format
     """
-    print "Loading tensorflow ..."
+    print "Loading " + view + " model from disk..."
     smooth = 1.
 
     def dice_coef(y_true, y_pred):
@@ -116,8 +116,7 @@ def predict_mask(input_file, view='default', rotate_view=False):
 
     # load weights into new model
     loaded_model.load_weights(
-        '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/model/weights-' + view + '-improvement-10.h5')
-    print("Loaded model from disk")
+        '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/model/' + view + '.h5')
 
     # evaluate loaded model on test data
     loaded_model.compile(optimizer=Adam(lr=1e-5),
@@ -244,7 +243,8 @@ def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file, rotate_view=F
     x = np.multiply(x, 0.1)
     y = np.multiply(y, 0.4)
     z = np.multiply(z, 0.5)
-
+    
+    print("Performing Muti View Aggregation...")
     XplusY = np.add(x, y)
     multi_view = np.add(XplusY, z)
     multi_view[multi_view > 0.45] = 1

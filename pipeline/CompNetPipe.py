@@ -243,7 +243,7 @@ def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file, rotate_view=F
     x = np.multiply(x, 0.1)
     y = np.multiply(y, 0.4)
     z = np.multiply(z, 0.5)
-    
+
     print("Performing Muti View Aggregation...")
     XplusY = np.add(x, y)
     multi_view = np.add(XplusY, z)
@@ -737,7 +737,8 @@ if __name__ == '__main__':
                 multi_view_mask = multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file, rotate_view=rotate_view)
                 brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], multi_view_mask, case_arr[i], cases_dim[i], view='multi')
                 print "Mask file = ", brain_mask_multi
-                clear(os.path.dirname(brain_mask_multi))
+            
+            clear(os.path.dirname(brain_mask_multi))
 
             #sagittal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_sagittal, case_arr, cases_dim, view='sagittal')
             #coronal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_coronal, case_arr, cases_dim, view='coronal')
@@ -759,7 +760,7 @@ if __name__ == '__main__':
 
                 b0_nii = nhdr_to_nifti(b0_nhdr)
             else:
-                b0_nii = os.path.join(directory, input_file) #extract_b0(os.path.join(directory, input_file))
+                b0_nii = extract_b0(os.path.join(directory, input_file))
 
             dimensions = get_dimension(b0_nii)
             b0_resampled = resample(b0_nii)

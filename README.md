@@ -6,18 +6,6 @@ Trained Model Weights: https://drive.google.com/open?id=1UwzyaN9V8TVJ9_jZIJjrSsl
 
 ![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/CompNet%20Arch.png)
 
-1) permute.sh
-2) extract_b0.sh
-3) convert.sh
-4) resample.sh
-5) percentile.py
-6) 3dPadding.py
-7) merge.py
-8) shuffle.py
-9) gaussianBlur.py
-10) rotate.py
-11) predict.py
-12) split_so.py
-13) view.py
+
 
 ![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/Multiview.png)

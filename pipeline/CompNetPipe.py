@@ -3,7 +3,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	08/19/2019
+# Last Updated: 	08/21/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -254,7 +254,7 @@ def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file):
     output_file = os.path.join(os.path.dirname(input_file), output_name)
 
     SO = multi_view.astype('float32')
-    SO = scipy.ndimage.rotate(SO, 180, axes=(0, 1))
+    #SO = scipy.ndimage.rotate(SO, 180, axes=(0, 1))
     np.save(output_file, SO)
     return output_file
 
@@ -273,7 +273,7 @@ def check_gradient(Nhdr_file):
     header_gradient = 0
     total_gradient = 1
     bashCommand1 = "unu head " + input_file + " | grep -i sizes | awk '{print $5}'"
-    bashCommand2 = "unu head " + input_file + " | grep -i gradient | wc -l"
+    bashCommand2 = "unu head " + input_file + " | grep -i _gradient_ | wc -l"
     output1 = subprocess.check_output(bashCommand1, shell=True)
     output2 = subprocess.check_output(bashCommand2, shell=True)
     if output1.strip():
@@ -352,7 +352,7 @@ def extract_b0(input_file):
     case_name = os.path.basename(input_file)
     output_name = 'dwib0_' + case_name
     output_file = os.path.join(os.path.dirname(input_file), output_name)
-    if case_name.endswith(SUFFIX_NRRD) | case_name.endswith(SUFFIX_NRRD):
+    if case_name.endswith(SUFFIX_NRRD) | case_name.endswith(SUFFIX_NHDR):
         bashCommand = 'bse.sh -i ' + input_file + ' -o ' + output_file + ' &>/dev/null'
     else:
         if case_name.endswith(SUFFIX_NIFTI_GZ):
@@ -375,6 +375,7 @@ def extract_b0(input_file):
             print "File not found ", bval_file
             sys.exit(1)
 
+        # dwiextract only works for nifti files
         bashCommand = 'dwiextract -force -fslgrad ' + bvec_file + ' ' + bval_file + ' -bzero ' + \
                       input_file + ' ' + output_file + ' &>/dev/null'
 
@@ -658,9 +659,9 @@ if __name__ == '__main__':
 
                     if input_file.endswith(SUFFIX_NRRD) | input_file.endswith(SUFFIX_NHDR):
                         if not check_gradient(os.path.join(directory, input_file)):
-                           b0_nhdr = extract_b0(input_file)
+                           b0_nhdr = extract_b0(os.path.join(directory, input_file))
                         else:
-                            b0_nhdr = os.path.join(directory, input_file)
+                           b0_nhdr = os.path.join(directory, input_file)
 
                         b0_nii = nhdr_to_nifti(b0_nhdr)
                     else:
@@ -678,7 +679,7 @@ if __name__ == '__main__':
 
 
                     imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
-                    imgU16_sagittal = scipy.ndimage.rotate(imgU16_sagittal, 180, axes=(0, 1))
+                    #imgU16_sagittal = scipy.ndimage.rotate(imgU16_sagittal, 180, axes=(0, 1))
 
                     imgU16_coronal = np.swapaxes(imgU16_sagittal, 0, 1)  # coronal view
 
@@ -732,7 +733,7 @@ if __name__ == '__main__':
                 multi_view_mask = multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file)
                 brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], multi_view_mask, case_arr[i], cases_dim[i], view='multi')
 
-            #sagittal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_sagittal, case_arr, cases_dim, view='sagittal')
+            sagittal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_sagittal, case_arr, cases_dim, view='sagittal')
             #coronal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_coronal, case_arr, cases_dim, view='coronal')
             #axial_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_axial, case_arr, cases_dim, view='axial')
 
@@ -751,7 +752,7 @@ if __name__ == '__main__':
 
             if input_file.endswith(SUFFIX_NRRD) | input_file.endswith(SUFFIX_NHDR):
                 if not check_gradient(os.path.join(directory, input_file)):
-                    b0_nhdr = extract_b0(input_file)
+                    b0_nhdr = extract_b0(os.path.join(directory, input_file))
                 else:
                     b0_nhdr = os.path.join(directory, input_file)
 

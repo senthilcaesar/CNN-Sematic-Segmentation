@@ -2,7 +2,7 @@ Complementary Segmentation Network for Brain MRI Extraction. To view the paper o
 
 Trained Model Architecture: https://drive.google.com/open?id=1XlNhAjX0eg6Omz61nWfx090oGCfepw7l
 
-Trained Model Weights: https://drive.google.com/open?id=1UwzyaN9V8TVJ9_jZIJjrSslMP9qY3HEn
+Trained Model Weights: https://drive.google.com/open?id=1FRsDkVzQDjrR3kM3hGZ6iAlSyQuKrvOs
 
 ![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/CompNet%20Arch.png)
 

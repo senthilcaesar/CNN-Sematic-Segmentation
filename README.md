@@ -44,6 +44,6 @@ You need to have following in order for this library to work as expected
 
 
 ### Multi View Aggregation step:
-This approach is to train 3 separate networks for different views ( Sagittal, Coronal and axial ) and 
+This approach is to train 3 separate networks for three principal axes ( Sagittal, Coronal and axial ) and 
 to perform multi-view aggregation step that combines segmentations from models trained on 2D slices along three principal axes: coronal, sagittal and axial. The final segmentation would be obtained by combining the probability maps from all three segmentation.
 ![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/Multiview.png)

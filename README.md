@@ -14,9 +14,9 @@ If you use this code please cite:
 
 Raunak Dey, Yi Hong, C.2018 CompNet: Complementary Segmentation Network for Brain MRI Extraction . Accepted to MICCAI 2018 https://arxiv.org/abs/1804.00521
 
-Getting Started
+## Getting Started
 
-Pre-requisites
+### Pre-requisites
 
 You need to have following in order for this library to work as expected
 

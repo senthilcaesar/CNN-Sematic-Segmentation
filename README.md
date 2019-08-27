@@ -2,7 +2,8 @@
 
 ## Tool:CompNet: Segmenting diffusion brain MRI
 
-The code for training, as well as the Trained Models are provided here
+The code for training, as well as the Trained Models are provided here.
+The model is trained on 1000 b0 diffsuion Images.
 
 > Model Architecture: https://drive.google.com/open?id=1XlNhAjX0eg6Omz61nWfx090oGCfepw7l
 

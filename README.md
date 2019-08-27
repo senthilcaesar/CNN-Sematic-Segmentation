@@ -1,5 +1,7 @@
 # CompNet - Keras Implementation
 
+## Tool:CompNet: Segmenting diffusion brain MRI
+
 The code for training, as well as the Trained Models are provided here
 
 Model Architecture: https://drive.google.com/open?id=1XlNhAjX0eg6Omz61nWfx090oGCfepw7l

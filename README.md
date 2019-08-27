@@ -37,6 +37,8 @@ You need to have following in order for this library to work as expected
 13) cudatoolkit = 9.0
 14) cudnn = 7.0.5
 
+### Code Authors
+* Raunak Dey - https://github.com/raun1
 ### Model Architecture
 ![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/CompNet%20Arch.png)
 

@@ -37,8 +37,9 @@ You need to have following in order for this library to work as expected
 13) cudatoolkit = 9.0
 14) cudnn = 7.0.5
 
+### Model Architecture
 ![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/CompNet%20Arch.png)
 
 
-Multi View Aggregation step:
+### Multi View Aggregation step:
 ![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/Multiview.png)

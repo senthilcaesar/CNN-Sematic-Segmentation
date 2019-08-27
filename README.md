@@ -1,4 +1,4 @@
-#CompNet - Keras Implementation
+# CompNet - Keras Implementation
 
 The code for training, as well as the Trained Models are provided here
 

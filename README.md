@@ -41,15 +41,15 @@ You need to have following in order for this library to work as expected
 * Raunak Dey - [raun1](https://github.com/raun1)
 ### Model Architecture
 The proposed networks are designed in the framework of encoder-decoder networks and have three pathways.
-> 1)Segmentation Branch - learns what is the brain tissue and to generate a brain mask 
-> 2)Complementary Branch - learns what is outside of the brain and to help the other
+> 1) Segmentation Branch - learns what is the brain tissue and to generate a brain mask 
+> 2) Complementary Branch - learns what is outside of the brain and to help the other
 branch generate a better brain mask
-> 3)Reconstruction Branch - It provides direct feedback to the segmentation and
+> 3) Reconstruction Branch - It provides direct feedback to the segmentation and
 complementary branche and expects reasonable predictions from them as input to reconstruct the original input image.
 ![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/CompNet%20Arch.png)
 
 
 ### Multi View Aggregation step:
-This approach is to train 3 separate networks for three principal axes ( Sagittal, Coronal and axial ) and 
+> This approach is to train 3 separate networks for three principal axes ( Sagittal, Coronal and axial ) and 
 to perform multi-view aggregation step that combines segmentations from models trained on 2D slices along three principal axes: coronal, sagittal and axial. The final segmentation would be obtained by combining the probability maps from all three segmentation.
 ![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/Multiview.png)

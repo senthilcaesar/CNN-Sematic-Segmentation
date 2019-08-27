@@ -38,7 +38,7 @@ You need to have following in order for this library to work as expected
 14) cudnn = 7.0.5
 
 ### Code Author
-* Raunak Dey - https://github.com/raun1
+* Raunak Dey - [raun1](https://github.com/raun1)
 ### Model Architecture
 ![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/CompNet%20Arch.png)
 

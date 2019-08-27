@@ -13,7 +13,7 @@ CompNet.py
 1)  Accepts the diffusion image in *.nhdr,*.nrrd,*.nii.gz,*.nii format
 2)  Checks if the Image axis is in the correct order for *.nhdr and *.nrrd file
 3)  Extracts b0 Image
-4)  Converts nhdr to nii.gz
+4)  Converts nhdr/nrrd to nii.gz
 5)  Re sample nii.gz file to 246 x 246
 6)  Pads the Image adding zeros to 256 x 256
 7)  Normalize the Image by 99th percentile

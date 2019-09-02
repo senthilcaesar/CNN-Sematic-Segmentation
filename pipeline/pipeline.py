@@ -3,7 +3,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	08/21/2019
+# Last Updated: 	09/02/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -13,7 +13,7 @@ CompNet.py
 1)  Accepts the diffusion image in *.nhdr,*.nrrd,*.nii.gz,*.nii format
 2)  Checks if the Image axis is in the correct order for *.nhdr and *.nrrd file
 3)  Extracts b0 Image
-4)  Converts nhdr/nrrd to nii.gz
+4)  Converts nhdr to nii.gz
 5)  Re sample nii.gz file to 246 x 246
 6)  Pads the Image adding zeros to 256 x 256
 7)  Normalize the Image by 99th percentile
@@ -30,11 +30,13 @@ import os
 import os.path
 from os import path
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress tensor flow message
+# import tensorflow as tf
+# if tf.test.is_gpu_available():
+#     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+# else:
+#     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import tensorflow as tf
-if tf.test.is_gpu_available():
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-else:
-    os.environ["CUDA_VISIBLE_DEVICES"] = ""
 import re
 import sys
 import subprocess
@@ -307,7 +309,7 @@ def resample(nii_file):
 
     input_file = nii_file
     case_name = os.path.basename(input_file)
-    output_name = 'Comp_' + case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-linear.nii.gz'
+    output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-linear.nii.gz'
     output_file = os.path.join(os.path.dirname(input_file), output_name)
     bashCommand_resample = "ResampleImage 3 " + input_file + " " + output_file + " " + "256x246x246 1"
     output2 = subprocess.check_output(bashCommand_resample, shell=True)
@@ -498,7 +500,9 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
             bashCommand = 'mv ' + filled_file + " " + output_folder
             process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
             output, error = process.communicate()
-            output_mask.append(output_folder)
+
+            inverse_outfile = inverse_transform(output_folder, sub_name[i])
+            output_mask.append(inverse_outfile)
     else:
         image_space = nib.load(b0_normalized_cases)
         predict = np.load(cases_mask_arr)
@@ -531,13 +535,15 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
         else:
             format = SUFFIX_NIFTI
 
-        output_mask_name = sub_name[:len(sub_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
+        sub_base_name = os.path.basename(sub_name)
+        output_mask_name = sub_base_name[:len(sub_base_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
 
-        output_mask = os.path.join(output_dir, output_mask_name)
-        bashCommand = 'mv ' + filled_file + " " + output_mask
+        output_mask_1 = os.path.join(output_dir, output_mask_name)
+        bashCommand = 'mv ' + filled_file + " " + output_mask_1
         #bashCommand = 'ConvertBetweenFileFormats ' + filled_file + " " + output_mask
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
+        output_mask = inverse_transform(output_mask_1, sub_name)
 
     return output_mask
 
@@ -590,6 +596,52 @@ def split(cases_file, case_arr, view='default'):
     return predict_mask
 
 
+def rigid_body_trans(b0_nii):
+
+    print("Performing rigid body transformation...")
+    input_file = b0_nii
+    case_name = os.path.basename(input_file)
+    output_name = 'Comp_' + case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-transformed.nii.gz'
+    output_file = os.path.join(os.path.dirname(input_file), output_name)
+
+    #reference = '/rfanfs/pnl-zorro/home/sq566/CompNetPipeline/reference/IITmean_b0.nii'
+    reference = '/rfanfs/pnl-zorro/home/sq566/CompNetPipeline/reference/reference.nii.gz'
+
+    # Compute Transformation matrix using flirt
+    trans_matrix = "flirt -in " + input_file +  " -ref " + reference + \
+                   " -omat /rfanfs/pnl-zorro/home/sq566/CompNetPipeline/A2B.mat \
+                   -dof 6 -cost mutualinfo"
+    output1 = subprocess.check_output(trans_matrix, shell=True)
+
+    # Apply this transformation to the input volume
+    apply_trans = "flirt -in " + input_file + " -ref " + reference + \
+                  " -applyxfm -init /rfanfs/pnl-zorro/home/sq566/CompNetPipeline/A2B.mat -o " + output_file
+    output2 = subprocess.check_output(apply_trans, shell=True)
+
+    return output_file
+
+
+def inverse_transform(predicted_mask, reference):
+
+    print("Performing inverse transform...")
+    input_file = predicted_mask
+    case_name = os.path.basename(input_file)
+    output_name = 'Comp_' + case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-inverse.nii.gz'
+    output_file = os.path.join(os.path.dirname(input_file), output_name)
+
+    # Invert the matrix
+    inverse = "convert_xfm -omat /rfanfs/pnl-zorro/home/sq566/CompNetPipeline/B2A.mat \
+              -inverse /rfanfs/pnl-zorro/home/sq566/CompNetPipeline/A2B.mat"
+    output1 = subprocess.check_output(inverse, shell=True)
+    
+    # Apply the inverse transformation to the predicted mask
+    apply_inverse_trans = "flirt -in " + input_file + " -ref " + reference + \
+                          " -applyxfm -init B2A.mat -o " + output_file
+    output2 = subprocess.check_output(apply_inverse_trans, shell=True)
+
+    return output_file
+
+
 if __name__ == '__main__':
 
     start_t = datetime.datetime.now()
@@ -632,9 +684,9 @@ if __name__ == '__main__':
 
 
             TXT_file = os.path.basename(filename)
-            print(TXT_file)
+            #print(TXT_file)
             unique = TXT_file[:len(TXT_file) - (len(SUFFIX_TXT)+1)]
-            print(unique)
+            #print(unique)
             binary_file_s = '/rfanfs/pnl-zorro/home/sq566/tmp/' + unique + '_binary_s'
             binary_file_c = '/rfanfs/pnl-zorro/home/sq566/tmp/'+ unique + '_binary_c'
             binary_file_a = '/rfanfs/pnl-zorro/home/sq566/tmp/'+ unique + '_binary_a'
@@ -668,14 +720,15 @@ if __name__ == '__main__':
 
                         b0_nii = nhdr_to_nifti(b0_nhdr)
                     else:
-                        b0_nii = extract_b0(os.path.join(directory, input_file))
+                        b0_nii = os.path.join(directory, input_file) #extract_b0(os.path.join(directory, input_file))
 
                     #b0_nii = os.path.join(directory, input_file)
                     dimensions = get_dimension(b0_nii)
                     cases_dim.append(dimensions)
                     x_dim += int(dimensions[0])
                     split_dim.append(int(dimensions[0]))
-                    b0_resampled = resample(b0_nii)
+                    b0_transform = rigid_body_trans(b0_nii)
+                    b0_resampled = resample(b0_transform)
                     b0_normalized = normalize(b0_resampled)
                     b0_normalized_cases.append(b0_normalized)
                     img = nib.load(b0_normalized)
@@ -738,7 +791,7 @@ if __name__ == '__main__':
                 brain_mask_multi = npy_to_nhdr(b0_normalized_cases[i], multi_view_mask, case_arr[i], cases_dim[i], view='multi')
                 print "Mask file = ", brain_mask_multi
             
-            clear(os.path.dirname(brain_mask_multi))
+            #clear(os.path.dirname(brain_mask_multi))
 
             #sagittal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_sagittal, case_arr, cases_dim, view='sagittal')
             #coronal_mask = npy_to_nhdr(b0_normalized_cases, cases_mask_coronal, case_arr, cases_dim, view='coronal')
@@ -760,24 +813,27 @@ if __name__ == '__main__':
 
                 b0_nii = nhdr_to_nifti(b0_nhdr)
             else:
-                b0_nii = extract_b0(os.path.join(directory, input_file))
+                b0_nii = os.path.join(directory, input_file) #extract_b0(os.path.join(directory, input_file))
 
             dimensions = get_dimension(b0_nii)
-            b0_resampled = resample(b0_nii)
+            b0_transform = rigid_body_trans(b0_nii)
+            b0_resampled = resample(b0_transform)
             b0_normalized = normalize(b0_resampled)
 
             dwi_mask_sagittal = predict_mask(b0_normalized, view='sagittal', rotate_view=rotate_view)
             dwi_mask_coronal = predict_mask(b0_normalized, view='coronal', rotate_view=rotate_view)
             dwi_mask_axial = predict_mask(b0_normalized, view='axial', rotate_view=rotate_view)
 
+            subject_name = os.path.join(directory, input_file)
+
             multi_view_mask = multi_view_fast(dwi_mask_sagittal, dwi_mask_coronal, dwi_mask_axial, input_file, rotate_view=rotate_view)
 
-            #brain_mask_sagittal = npy_to_nhdr(b0_normalized, dwi_mask_sagittal, input_file, dimensions, view='sagittal')
-            #brain_mask_coronal = npy_to_nhdr(b0_normalized, dwi_mask_coronal, input_file, dimensions, view='coronal')
-            #brain_mask_axial = npy_to_nhdr(b0_normalized, dwi_mask_axial, input_file, dimensions, view='axial')
-            brain_mask_multi = npy_to_nhdr(b0_normalized, multi_view_mask, input_file, dimensions, view='multi')
+            brain_mask_sagittal = npy_to_nhdr(b0_normalized, dwi_mask_sagittal, subject_name, dimensions, view='sagittal')
+            brain_mask_coronal = npy_to_nhdr(b0_normalized, dwi_mask_coronal, subject_name, dimensions, view='coronal')
+            brain_mask_axial = npy_to_nhdr(b0_normalized, dwi_mask_axial, subject_name, dimensions, view='axial')
+            brain_mask_multi = npy_to_nhdr(b0_normalized, multi_view_mask, subject_name, dimensions, view='multi')
 
-            clear(directory)
+            #clear(directory)
             print "Mask file = ", brain_mask_multi
 
         end_t = datetime.datetime.now()

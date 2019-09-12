@@ -42,7 +42,7 @@ import tensorflow as tf
 import re
 import sys
 import subprocess
-import argparse
+import argparse, textwrap
 import datetime
 import os.path
 import pathlib
@@ -700,12 +700,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-i', action='store', dest='dwi', type=str,
-                        help='Input Diffusion Image')
+                        help=" input single diffusion image or a caselist ")
 
     try:
         args = parser.parse_args()
         if len(sys.argv) == 1:
             parser.print_help()
+            parser.error('too few arguments')
             sys.exit(0)
 
     except SystemExit:

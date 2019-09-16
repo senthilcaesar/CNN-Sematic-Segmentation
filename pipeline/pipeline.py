@@ -393,8 +393,12 @@ def extract_b0(input_file):
             sys.exit(1)
 
         # dwiextract only works for nifti files
-        bashCommand = 'dwiextract -force -fslgrad ' + bvec_file + ' ' + bval_file + ' -bzero ' + \
+        dwiextract = 'dwiextract -force -fslgrad ' + bvec_file + ' ' + bval_file + ' -bzero ' + \
                       input_file + ' ' + output_file + ' &>/dev/null'
+
+        subprocess.check_output(dwiextract, shell=True)
+
+        bashCommand = 'mrmath -force ' + output_file + " mean " + output_file + " -axis 3" + ' &>/dev/null'
 
     output = subprocess.check_output(bashCommand, shell=True)
     return output_file
@@ -1037,7 +1041,7 @@ if __name__ == '__main__':
 
                 b0_nii = nhdr_to_nifti(b0_nhdr)
             else:
-                b0_nii = os.path.join(directory, input_file) #extract_b0(os.path.join(directory, input_file))
+                b0_nii = extract_b0(os.path.join(directory, input_file))
 
             dimensions = get_dimension(b0_nii)
             b0_resampled = resample(b0_nii)

@@ -641,6 +641,7 @@ def clear(directory):
         if filename.startswith('Comp') | filename.endswith(SUFFIX_NPY) | \
                 filename.endswith('_SO.nii.gz') | filename.endswith('downsampled.nii.gz') | \
                 filename.endswith('-thresholded.nii.gz') | filename.endswith('-inverse.mat') | \
+                filename.endswith('_affinedMask.nii.gz') | filename.endswith('_originalMask.nii.gz') | \
                 filename.endswith('multi-mask.nii.gz') | filename.endswith('-mask-inverse.nii.gz'):
                 os.unlink(directory + '/' + filename)
 
@@ -1042,7 +1043,7 @@ if __name__ == '__main__':
             else:
                 b0_transform = b0_normalized
                 omat_file = None
-                
+
             dwi_mask_sagittal = predict_mask(b0_transform, view='sagittal')
             dwi_mask_coronal = predict_mask(b0_transform, view='coronal')
             dwi_mask_axial = predict_mask(b0_transform, view='axial')

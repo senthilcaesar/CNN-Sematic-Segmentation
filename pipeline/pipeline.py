@@ -3,7 +3,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	09/13/2019
+# Last Updated: 	09/21/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -23,7 +23,7 @@ CompNet.py
 11) Converts npy to nhdr,nrrd,nii,nii.gz
 12) Applys Inverse tranformation
 13) Down sample to original resolution
-14) Peforms Binary Dilation
+14) Peforms Binary Dilation and Erosion
 15) Cleaning
 """
 
@@ -696,14 +696,14 @@ def ANTS_rigid_body_trans(b0_nii):
     trans_matrix = "antsRegistrationSyNQuick.sh -d 3 -f " + reference + " -m " + input_file + " -t r -o " + output_file
     output1 = subprocess.check_output(trans_matrix, shell=True)
 
-    omat_name = output_file[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-0GenericAffine.mat'
+    omat_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-0GenericAffine.mat'
     omat_file = os.path.join(os.path.dirname(input_file), omat_name)
 
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-Warped.nii.gz'
     transformed_file = os.path.join(os.path.dirname(input_file), output_name)
 
-    print "output_file = ", transformed_file
-    print "omat_file = ", omat_file
+    #print "output_file = ", transformed_file
+    #print "omat_file = ", omat_file
 
     return transformed_file, omat_file
 
@@ -740,9 +740,9 @@ def FSL_rigid_body_trans(b0_nii):
 
 def ANTS_inverse_transform(predicted_mask, reference, omat='default'):
 
-    print "Mask file = ", predicted_mask
-    print "Reference = ", reference
-    print "omat = ", omat
+    #print "Mask file = ", predicted_mask
+    #print "Reference = ", reference
+    #print "omat = ", omat
 
     print("Performing ants inverse transform...")
     input_file = predicted_mask

@@ -43,7 +43,7 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 try:
     DEVICE_ID_LIST = GPUtil.getFirstAvailable()
     DEVICE_ID = DEVICE_ID_LIST[0] # grab first element from list
-    print("GPU found...", DEVICE_ID)
+    print "GPU found...", DEVICE_ID
 
     # Set CUDA_VISIBLE_DEVICES to mask out all other GPUs than the first available device id
     os.environ["CUDA_VISIBLE_DEVICES"] = str(DEVICE_ID)
@@ -67,6 +67,7 @@ import scipy.ndimage as nd
 from os import path
 from keras.models import load_model
 from keras.models import model_from_json
+from keras.utils import multi_gpu_model
 import cv2
 import sys
 import keras
@@ -162,6 +163,9 @@ def predict_mask(input_file, view='default'):
         x_test = np.load(input_file)
 
     x_test = x_test.reshape(x_test.shape + (1,))
+
+    #parallel_model = multi_gpu_model(loaded_model, gpus=4)
+
     predict_x = loaded_model.predict(x_test, verbose=1)
     SO = predict_x[5]  # Segmentation Output
     del predict_x
@@ -429,6 +433,13 @@ def nhdr_to_nifti(Nhdr_file):
 
 def normalize(b0_resampled):
     """
+    Intensity based segmentation of MR images is hampered by radio frerquency field
+    inhomogeneity causing intensity variation. The intensity range is typically
+    scaled between the highest and lowest signal in the Image. Intensity values
+    of the same tissue can vary between scans. The pixel value in images must be
+    scaled prior to providing the images as input to CNN. The data is projected in to
+    a predefined range [0,1]
+
     Parameters
     ---------
     b0_resampled : str
@@ -846,7 +857,7 @@ def list_masks(mask_list, view='default'):
 
 if __name__ == '__main__':
 
-    start_t = datetime.datetime.now()
+    start_total_time = datetime.datetime.now()
     # parser module for input arguments
     parser = argparse.ArgumentParser()
 
@@ -878,8 +889,6 @@ if __name__ == '__main__':
 
     except SystemExit:
         sys.exit(0)
-
-
 
     tmp_path = "/rfanfs/pnl-zorro/home/sq566/tmp"
 
@@ -989,9 +998,17 @@ if __name__ == '__main__':
             np.save(cases_file_c, merge_c)
             np.save(cases_file_a, merge_a)
 
+            end_preprocessing_time = datetime.datetime.now()
+            total_preprocessing_time = end_preprocessing_time - start_total_time
+            print "Pre-Processing Time Taken in min = ", int(total_preprocessing_time.seconds)/60
+
             dwi_mask_sagittal = predict_mask(cases_file_s, view='sagittal')
             dwi_mask_coronal = predict_mask(cases_file_c, view='coronal')
             dwi_mask_axial = predict_mask(cases_file_a, view='axial')
+
+            end_masking_time = datetime.datetime.now()
+            total_masking_time = end_masking_time - start_total_time - total_preprocessing_time
+            print "Masking Time Taken in min = ", int(total_masking_time.seconds)/60
 
             print "Splitting files...."
 
@@ -1038,7 +1055,7 @@ if __name__ == '__main__':
                 slices += str1 + " " + str2 + " "
 
             final = "slicesdir -o" + slices
-            #print final
+            print final
         
             os.chdir(tmp_path)
             subprocess.check_output(final, shell=True)
@@ -1104,9 +1121,17 @@ if __name__ == '__main__':
                 b0_transform = b0_normalized
                 omat_file = None
 
+            end_preprocessing_time = datetime.datetime.now()
+            total_preprocessing_time = end_preprocessing_time - start_total_time
+            print "Pre-Processing Time Taken in min = ", int(total_preprocessing_time.seconds)/60
+
             dwi_mask_sagittal = predict_mask(b0_transform, view='sagittal')
             dwi_mask_coronal = predict_mask(b0_transform, view='coronal')
             dwi_mask_axial = predict_mask(b0_transform, view='axial')
+
+            end_masking_time = datetime.datetime.now()
+            total_masking_time = end_masking_time - start_total_time - total_preprocessing_time
+            print "Masking Time Taken in min = ", int(total_masking_time.seconds)/60
 
             subject_name = os.path.join(directory, input_file)
 
@@ -1162,11 +1187,11 @@ if __name__ == '__main__':
             slices += str1 + " " + str2 + " "
 
             final = "slicesdir -o" + slices
-            #print final
+            print final
             os.chdir(tmp_path)
             subprocess.check_output(final, shell=True)
             webbrowser.open(os.path.join(tmp_path, 'slicesdir/index.html'))
 
-        end_t = datetime.datetime.now()
-        total_t = end_t - start_t
-print("Time Taken in sec = ", total_t.seconds)
+        end_total_time = datetime.datetime.now()
+        total_t = end_total_time - start_total_time
+print "Total Time Taken in min = ", int(total_t.seconds)/60

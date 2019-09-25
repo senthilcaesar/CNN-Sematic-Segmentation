@@ -3,7 +3,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:		PNL BWH                 
 # Written:		07/02/2019                             
-# Last Updated: 	09/23/2019
+# Last Updated: 	09/25/2019
 # Purpose:  		Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -965,7 +965,7 @@ if __name__ == '__main__':
                 split_dim = manager.list()
                 cases_dim = manager.list()
                 reference_list = manager.list()
-                omat_list = manager.list()
+                omat_list = []
                 shuffled_list = manager.list()
 
                 jobs = []
@@ -1003,8 +1003,9 @@ if __name__ == '__main__':
                 for subject_NO_ANTS in reference_list:
                     b0_normalized_cases.append(subject_NO_ANTS)
 
+            count = 0
             for b0_nifti in b0_normalized_cases:
-                count = 0
+                
                 img = nib.load(b0_nifti)
 
                 imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
@@ -1092,7 +1093,7 @@ if __name__ == '__main__':
                 slices += str1 + " " + str2 + " "
 
             final = "slicesdir -o" + slices
-            print final
+            #print final
         
             os.chdir(tmp_path)
             subprocess.check_output(final, shell=True)
@@ -1225,7 +1226,7 @@ if __name__ == '__main__':
             slices += str1 + " " + str2 + " "
 
             final = "slicesdir -o" + slices
-            print final
+            #print final
             os.chdir(tmp_path)
             subprocess.check_output(final, shell=True)
             webbrowser.open(os.path.join(tmp_path, 'slicesdir/index.html'))

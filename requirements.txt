@@ -15,5 +15,5 @@ gputil=1.4.0 ( https://github.com/anderskm/gputil )
 
 
 # pnl local machines
-tensorflow=1.5.0
-keras=2.1.5
+tensorflow>=1.5.0
+keras>=2.1.5

@@ -173,8 +173,10 @@ def predict_mask(input_file, view='default'):
 
     if input_file.endswith(SUFFIX_NIFTI_GZ):
         if view == 'coronal':
+            SO[180:,:,:] = 0.0         # Ignoring eyes slices
             SO = np.swapaxes(SO, 1, 0) # coronal to sagittal view
         elif view == 'axial':
+            SO[0:84,:,:] = 0.0         # Ignoring eyes slices
             SO = np.swapaxes(SO, 2, 0) # axial to sagittal view
     np.save(output_file, SO)
     return output_file
@@ -692,8 +694,10 @@ def split(cases_file, case_arr, view='default'):
         end = start + 256
         casex = SO[start:end, :, :]
         if view == 'coronal':
+            casex[180:,:,:] = 0.0 
             casex = np.swapaxes(casex, 0, 1)
         elif view == 'axial':
+            casex[0:84,:,:] = 0.0
             casex = np.swapaxes(casex, 0, 2)
         input_file = str(case_arr[i])
         output_file = input_file[:len(input_file) - (len(SUFFIX_NHDR) + 1)] + '-' + view +'_SO.npy'

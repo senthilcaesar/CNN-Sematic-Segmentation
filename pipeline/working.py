@@ -1,9 +1,9 @@
 from __future__ import division
 # -----------------------------------------------------------------
-# Author:		PNL BWH                 
-# Written:		07/02/2019                             
-# Last Updated: 	09/30/2019
-# Purpose:  		Python pipeline for diffusion brain masking
+# Author:       PNL BWH                 
+# Written:      07/02/2019                             
+# Last Updated:     09/30/2019
+# Purpose:          Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
 """
@@ -904,6 +904,24 @@ def pre_process(subject, split_dim, cases_dim, reference_list, shuffled_list):
         sys.exit(1)
 
 
+def quality_control(mask_list, shuffled_list, tmp_path, view='default'):
+
+    slices = " "
+    for i in range(0, len(mask_list)):
+        str1 = shuffled_list[i]
+        str2 = os.path.basename(mask_list[i])
+        slices += str1 + " " + str2 + " "
+    
+    final = "slicesdir -o" + slices
+    os.chdir(tmp_path)
+    subprocess.check_output(final, shell=True)
+    mask_folder = os.path.join(tmp_path, 'slicesdir')
+    mask_newfolder = os.path.join(tmp_path, 'slicesdir_' + view)
+    bashCommand = 'mv ' + mask_folder + " " + mask_newfolder
+    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+
+
 if __name__ == '__main__':
 
     start_total_time = datetime.datetime.now()
@@ -1070,7 +1088,6 @@ if __name__ == '__main__':
             cases_mask_coronal = split(dwi_mask_coronal, shuffled_list, view='coronal', threshold=args.thr)
             cases_mask_axial = split(dwi_mask_axial, shuffled_list, view='axial', threshold=args.thr)
 
-            slices_multi = " "
             for i in range(0, len(cases_mask_sagittal)):
 
                 sagittal_SO = cases_mask_sagittal[i]
@@ -1104,20 +1121,7 @@ if __name__ == '__main__':
 
                 print "Mask file = ", brain_mask_multi
 
-                str1 = shuffled_list[i]
-                str2 = os.path.basename(brain_mask_multi)
-                slices_multi += str1 + " " + str2 + " "
-
-            final = "slicesdir -o" + slices_multi
-            #print final
-        
-            os.chdir(tmp_path)
-            subprocess.check_output(final, shell=True)
-            muti_mask_folder = os.path.join(tmp_path, 'slicesdir')
-            multi_mask_newfolder = os.path.join(tmp_path, 'slicesdir_multi')
-            bashCommand = 'mv ' + muti_mask_folder + " " + multi_mask_newfolder
-            process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-            output, error = process.communicate()
+            quality_control(brain_mask_multi, shuffled_list, tmp_path, view='multi')
 
             if args.Sagittal:
                 omat = omat_list
@@ -1134,18 +1138,7 @@ if __name__ == '__main__':
                                             omat=omat, 
                                             rigid=args.Rigid)
                 list_masks(sagittal_mask, view='sagittal')
-                for i in range(0, len(sagittal_mask)):
-                    str1_sag = shuffled_list[i]
-                    str2_sag= os.path.basename(sagittal_mask[i])
-                    slices_sag += str1_sag + " " + str2_sag + " "
-                final = "slicesdir -o" + slices_sag
-                os.chdir(tmp_path)
-                subprocess.check_output(final, shell=True)
-                sag_mask_folder = os.path.join(tmp_path, 'slicesdir')
-                sag_mask_newfolder = os.path.join(tmp_path, 'slicesdir_sag')
-                bashCommand = 'mv ' + sag_mask_folder + " " + sag_mask_newfolder
-                process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-                output, error = process.communicate()
+                quality_control(sagittal_mask, shuffled_list, tmp_path, view='sagittal')
 
             if args.Coronal:
                 omat = omat_list
@@ -1162,18 +1155,7 @@ if __name__ == '__main__':
                                           omat=omat,  
                                           rigid=args.Rigid)
                 list_masks(coronal_mask, view='coronal')
-                for i in range(0, len(coronal_mask)):
-                    str1_cor = shuffled_list[i]
-                    str2_cor = os.path.basename(coronal_mask[i])
-                    slices_cor += str1_cor + " " + str2_cor + " "
-                final = "slicesdir -o" + slices_cor
-                os.chdir(tmp_path)
-                subprocess.check_output(final, shell=True)
-                cor_mask_folder = os.path.join(tmp_path, 'slicesdir')
-                cor_mask_newfolder = os.path.join(tmp_path, 'slicesdir_cor')
-                bashCommand = 'mv ' + cor_mask_folder + " " + cor_mask_newfolder
-                process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-                output, error = process.communicate()
+                quality_control(coronal_mask, shuffled_list, tmp_path, view='coronal')
 
             if args.Axial:
                 omat = omat_list
@@ -1190,24 +1172,17 @@ if __name__ == '__main__':
                                          omat=omat, 
                                          rigid=args.Rigid)
                 list_masks(axial_mask, view='axial')
-                for i in range(0, len(axial_mask)):
-                    str1_ax = shuffled_list[i]
-                    str2_ax = os.path.basename(axial_mask[i])
-                    slices_ax += str1_ax + " " + str2_ax + " "
-                final = "slicesdir -o" + slices_ax
-                os.chdir(tmp_path)
-                subprocess.check_output(final, shell=True)
-                ax_mask_folder = os.path.join(tmp_path, 'slicesdir')
-                ax_mask_newfolder = os.path.join(tmp_path, 'slicesdir_ax')
-                bashCommand = 'mv ' + ax_mask_folder + " " + ax_mask_newfolder
-                process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-                output, error = process.communicate()
+                quality_control(axial_mask, shuffled_list, tmp_path, view='axial')
 
             clear(os.path.dirname(brain_mask_multi))
+
             webbrowser.open(os.path.join(tmp_path, 'slicesdir_multi/index.html'))
-            webbrowser.open(os.path.join(tmp_path, 'slicesdir_sag/index.html'))
-            webbrowser.open(os.path.join(tmp_path, 'slicesdir_cor/index.html'))
-            webbrowser.open(os.path.join(tmp_path, 'slicesdir_ax/index.html'))
+            if args.Sagittal:
+                webbrowser.open(os.path.join(tmp_path, 'slicesdir_sagittal/index.html'))
+            if agrs.Coronal:
+                webbrowser.open(os.path.join(tmp_path, 'slicesdir_coronal/index.html'))
+            if args.Axial:
+                webbrowser.open(os.path.join(tmp_path, 'slicesdir_axial/index.html'))
 
         # Input in nrrd / nhdr / nii / nii.gz format
         elif filename.endswith(SUFFIX_NHDR) | filename.endswith(SUFFIX_NRRD) | \

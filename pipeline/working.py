@@ -700,11 +700,13 @@ def split(cases_file, case_arr, view='default', threshold=0):
         end = start + 256
         casex = SO[start:end, :, :]
         if view == 'coronal':
-            if threshold == 2:
+            if threshold == 1 or threshold == 2:
+                print("Ignoring coronal eyes slices")
                 casex[180:,:,:] = 0.0 
             casex = np.swapaxes(casex, 0, 1)
         elif view == 'axial':
-            if threshold == 1 or threshold == 2:
+            if threshold == 2:
+                print("Ignoring axial eyes slices")
                 casex[0:84,:,:] = 0.0
             casex = np.swapaxes(casex, 0, 2)
         input_file = str(case_arr[i])
@@ -1088,6 +1090,7 @@ if __name__ == '__main__':
             cases_mask_coronal = split(dwi_mask_coronal, shuffled_list, view='coronal', threshold=args.thr)
             cases_mask_axial = split(dwi_mask_axial, shuffled_list, view='axial', threshold=args.thr)
 
+            multi_mask = []
             for i in range(0, len(cases_mask_sagittal)):
 
                 sagittal_SO = cases_mask_sagittal[i]
@@ -1120,8 +1123,9 @@ if __name__ == '__main__':
                                                     rigid=args.Rigid)
 
                 print "Mask file = ", brain_mask_multi
+                multi_mask.append(brain_mask_multi)
 
-            quality_control(brain_mask_multi, shuffled_list, tmp_path, view='multi')
+            quality_control(multi_mask, shuffled_list, tmp_path, view='multi')
 
             if args.Sagittal:
                 omat = omat_list
@@ -1179,7 +1183,7 @@ if __name__ == '__main__':
             webbrowser.open(os.path.join(tmp_path, 'slicesdir_multi/index.html'))
             if args.Sagittal:
                 webbrowser.open(os.path.join(tmp_path, 'slicesdir_sagittal/index.html'))
-            if agrs.Coronal:
+            if args.Coronal:
                 webbrowser.open(os.path.join(tmp_path, 'slicesdir_coronal/index.html'))
             if args.Axial:
                 webbrowser.open(os.path.join(tmp_path, 'slicesdir_axial/index.html'))

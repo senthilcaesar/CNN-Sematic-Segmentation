@@ -1070,7 +1070,7 @@ if __name__ == '__main__':
             cases_mask_coronal = split(dwi_mask_coronal, shuffled_list, view='coronal', threshold=args.thr)
             cases_mask_axial = split(dwi_mask_axial, shuffled_list, view='axial', threshold=args.thr)
 
-            slices = " "
+            slices_multi = " "
             for i in range(0, len(cases_mask_sagittal)):
 
                 sagittal_SO = cases_mask_sagittal[i]
@@ -1106,13 +1106,18 @@ if __name__ == '__main__':
 
                 str1 = shuffled_list[i]
                 str2 = os.path.basename(brain_mask_multi)
-                slices += str1 + " " + str2 + " "
+                slices_multi += str1 + " " + str2 + " "
 
-            final = "slicesdir -o" + slices
+            final = "slicesdir -o" + slices_multi
             #print final
         
             os.chdir(tmp_path)
             subprocess.check_output(final, shell=True)
+            muti_mask_folder = os.path.join(tmp_path, 'slicesdir')
+            multi_mask_newfolder = os.path.join(tmp_path, 'slicesdir_multi')
+            bashCommand = 'mv ' + muti_mask_folder + " " + multi_mask_newfolder
+            process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+            output, error = process.communicate()
 
             if args.Sagittal:
                 omat = omat_list
@@ -1129,6 +1134,18 @@ if __name__ == '__main__':
                                             omat=omat, 
                                             rigid=args.Rigid)
                 list_masks(sagittal_mask, view='sagittal')
+                for i in range(0, len(sagittal_mask)):
+                    str1_sag = shuffled_list[i]
+                    str2_sag= os.path.basename(sagittal_mask[i])
+                    slices_sag += str1_sag + " " + str2_sag + " "
+                final = "slicesdir -o" + slices_sag
+                os.chdir(tmp_path)
+                subprocess.check_output(final, shell=True)
+                sag_mask_folder = os.path.join(tmp_path, 'slicesdir')
+                sag_mask_newfolder = os.path.join(tmp_path, 'slicesdir_sag')
+                bashCommand = 'mv ' + sag_mask_folder + " " + sag_mask_newfolder
+                process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+                output, error = process.communicate()
 
             if args.Coronal:
                 omat = omat_list
@@ -1145,6 +1162,18 @@ if __name__ == '__main__':
                                           omat=omat,  
                                           rigid=args.Rigid)
                 list_masks(coronal_mask, view='coronal')
+                for i in range(0, len(coronal_mask)):
+                    str1_cor = shuffled_list[i]
+                    str2_cor = os.path.basename(coronal_mask[i])
+                    slices_cor += str1_cor + " " + str2_cor + " "
+                final = "slicesdir -o" + slices_cor
+                os.chdir(tmp_path)
+                subprocess.check_output(final, shell=True)
+                cor_mask_folder = os.path.join(tmp_path, 'slicesdir')
+                cor_mask_newfolder = os.path.join(tmp_path, 'slicesdir_cor')
+                bashCommand = 'mv ' + cor_mask_folder + " " + cor_mask_newfolder
+                process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+                output, error = process.communicate()
 
             if args.Axial:
                 omat = omat_list
@@ -1161,9 +1190,24 @@ if __name__ == '__main__':
                                          omat=omat, 
                                          rigid=args.Rigid)
                 list_masks(axial_mask, view='axial')
+                for i in range(0, len(axial_mask)):
+                    str1_ax = shuffled_list[i]
+                    str2_ax = os.path.basename(axial_mask[i])
+                    slices_ax += str1_ax + " " + str2_ax + " "
+                final = "slicesdir -o" + slices_ax
+                os.chdir(tmp_path)
+                subprocess.check_output(final, shell=True)
+                ax_mask_folder = os.path.join(tmp_path, 'slicesdir')
+                ax_mask_newfolder = os.path.join(tmp_path, 'slicesdir_ax')
+                bashCommand = 'mv ' + ax_mask_folder + " " + ax_mask_newfolder
+                process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+                output, error = process.communicate()
 
             clear(os.path.dirname(brain_mask_multi))
-            webbrowser.open(os.path.join(tmp_path, 'slicesdir/index.html'))
+            webbrowser.open(os.path.join(tmp_path, 'slicesdir_multi/index.html'))
+            webbrowser.open(os.path.join(tmp_path, 'slicesdir_sag/index.html'))
+            webbrowser.open(os.path.join(tmp_path, 'slicesdir_cor/index.html'))
+            webbrowser.open(os.path.join(tmp_path, 'slicesdir_ax/index.html'))
 
         # Input in nrrd / nhdr / nii / nii.gz format
         elif filename.endswith(SUFFIX_NHDR) | filename.endswith(SUFFIX_NRRD) | \

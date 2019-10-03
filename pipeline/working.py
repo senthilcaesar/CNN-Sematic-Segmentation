@@ -580,19 +580,26 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
             process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
             output, error = process.communicate()
 
-            output_nhdr_final = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
-            output_folder_final = os.path.join(output_dir, output_nhdr_final)
+            output_filter_folder = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_FilteredMask.nii.gz'
+            output_mask_filtered = os.path.join(output_dir, output_filter_folder)
 
-            img = nib.load(output_folder)
+            mask_filter = "maskfilter -force " + output_folder + " -scale 10 clean " + output_mask_filtered
+            process = subprocess.Popen(mask_filter.split(), stdout=subprocess.PIPE)
+            output, error = process.communicate()
+
+            img = nib.load(output_mask_filtered)
             data_dwi = nib.load(sub_name[i])
             imgU16 = img.get_data().astype(np.int16)
+
+            output_folder_final = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
+            output_mask_final = os.path.join(output_dir, output_folder_final)
 
             start = 5
             dim1 = int(dim[i][1]) + 5
             dim2 = int(dim[i][2]) + 5
             data_mask = imgU16[:,start:dim1,start:dim2]
-            save_nifti(output_folder_final, data_mask, affine=data_dwi.affine, hdr=data_dwi.header)
-            output_mask.append(output_folder_final)
+            save_nifti(output_mask_final, data_mask, affine=data_dwi.affine, hdr=data_dwi.header)
+            output_mask.append(output_mask_final)
     else:
         print "b0_normalized = ", b0_normalized_cases
         image_space = nib.load(b0_normalized_cases)
@@ -644,12 +651,19 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
-        output_nhdr_final = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
-        output_mask = os.path.join(output_dir, output_nhdr_final)
+        output_filter_folder = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_FilteredMask.nii.gz'
+        output_mask_filtered = os.path.join(output_dir, output_filter_folder)
 
-        img = nib.load(output_mask_original)
+        mask_filter = "maskfilter -force " + output_mask_original + " -scale 10 clean " + output_mask_filtered
+        process = subprocess.Popen(mask_filter.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+
+        img = nib.load(output_mask_filtered)
         data_dwi = nib.load(sub_name)
         imgU16 = img.get_data().astype(np.int16)
+
+        output_folder_final = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_BrainMask.nii.gz'
+        output_mask = os.path.join(output_dir, output_folder_final)
 
         start = 5
         dim1 = int(dim[1]) + 5

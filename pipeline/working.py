@@ -583,7 +583,7 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
             output_filter_folder = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_FilteredMask.nii.gz'
             output_mask_filtered = os.path.join(output_dir, output_filter_folder)
 
-            mask_filter = "maskfilter -force " + output_folder + " -scale 10 clean " + output_mask_filtered
+            mask_filter = "maskfilter -force " + output_folder + " -scale 5 clean " + output_mask_filtered
             process = subprocess.Popen(mask_filter.split(), stdout=subprocess.PIPE)
             output, error = process.communicate()
 
@@ -654,7 +654,7 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
         output_filter_folder = subject_name[:len(subject_name) - (len(format) + 1)] + '-' + view + '_FilteredMask.nii.gz'
         output_mask_filtered = os.path.join(output_dir, output_filter_folder)
 
-        mask_filter = "maskfilter -force " + output_mask_original + " -scale 10 clean " + output_mask_filtered
+        mask_filter = "maskfilter -force " + output_mask_original + " -scale 5 clean " + output_mask_filtered
         process = subprocess.Popen(mask_filter.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 

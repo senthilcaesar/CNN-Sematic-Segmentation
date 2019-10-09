@@ -374,7 +374,7 @@ def extract_b0(input_file):
                   Extracted b0 nhdr filename which is stored in disk
                   Uses "bse.sh" program
     """
-    print "Extracting b0"
+    print "Extracting b0..."
     case_dir = os.path.dirname(input_file)
     case_name = os.path.basename(input_file)
     output_name = 'dwib0_' + case_name
@@ -627,6 +627,10 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
         dim2 = str(int(dim[1]) + 10)
         dim3 = str(int(dim[2]) + 10)
 
+        print("dim1 =", dim1)
+        print("dim2 =", dim2)
+        print("dim3 =", dim3)
+
         bashCommand_downsample = "ResampleImage 3 " + output_file + " " + downsample_file + " " + dim1 + "x" + dim2 + "x" + dim3 + " 1"
         output2 = subprocess.check_output(bashCommand_downsample, shell=True)
 
@@ -669,6 +673,7 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, dim, view='defaul
         dim1 = int(dim[1]) + 5
         dim2 = int(dim[2]) + 5
         data_mask = imgU16[:,start:dim1,start:dim2]
+
         save_nifti(output_mask, data_mask, affine=data_dwi.affine, hdr=data_dwi.header)
 
     return output_mask
@@ -885,38 +890,42 @@ def list_masks(mask_list, view='default'):
         print view + " Mask file = ", mask_list[i]
 
 
-def pre_process(subject, split_dim, cases_dim, reference_list):
+def pre_process(lock,subject, split_dim, cases_dim, reference_list):
 
-    input_file = subject
-    f = pathlib.Path(input_file)
+    lock.acquire()
+    try:
+        input_file = subject
+        f = pathlib.Path(input_file)
 
-    if f.exists():
-        input_file = str(f)
-        asb_path = os.path.abspath(input_file)
-        directory = os.path.dirname(input_file)
-        input_file = os.path.basename(input_file)
+        if f.exists():
+            input_file = str(f)
+            asb_path = os.path.abspath(input_file)
+            directory = os.path.dirname(input_file)
+            input_file = os.path.basename(input_file)
 
-        if input_file.endswith(SUFFIX_NRRD) | input_file.endswith(SUFFIX_NHDR):
-            if not check_gradient(os.path.join(directory, input_file)):
-                b0_nhdr = extract_b0(os.path.join(directory, input_file))
+            if input_file.endswith(SUFFIX_NRRD) | input_file.endswith(SUFFIX_NHDR):
+                if not check_gradient(os.path.join(directory, input_file)):
+                    b0_nhdr = extract_b0(os.path.join(directory, input_file))
+                else:
+                    b0_nhdr = os.path.join(directory, input_file)
+
+                b0_nii = nhdr_to_nifti(b0_nhdr)
             else:
-                b0_nhdr = os.path.join(directory, input_file)
+                b0_nii = extract_b0(os.path.join(directory, input_file))
 
-            b0_nii = nhdr_to_nifti(b0_nhdr)
+            dimensions = get_dimension(b0_nii)
+            cases_dim.append(dimensions)
+            split_dim.append(int(dimensions[0]))
+
+            b0_normalized = normalize(b0_nii)
+            b0_resampled = resample(b0_normalized)
+            reference_list.append((b0_resampled, b0_nii))
+
         else:
-            b0_nii = os.path.join(directory, input_file) #extract_b0(os.path.join(directory, input_file))
-
-        dimensions = get_dimension(b0_nii)
-        cases_dim.append(dimensions)
-        split_dim.append(int(dimensions[0]))
-
-        b0_normalized = normalize(b0_nii)
-        b0_resampled = resample(b0_normalized)
-        reference_list.append((b0_resampled, subject))
-
-    else:
-        print "File not found ", input_file
-        sys.exit(1)
+            print "File not found ", input_file
+            sys.exit(1)
+    finally:
+        lock.release()
 
 
 def quality_control(mask_list, shuffled_list, tmp_path, view='default'):
@@ -1018,9 +1027,10 @@ if __name__ == '__main__':
                 
 
                 jobs = []
+                lock = mp.Lock()
 
                 for i in range(0,len(case_arr)):
-                    p = mp.Process(target=pre_process, args=(case_arr[i],
+                    p = mp.Process(target=pre_process, args=(lock,case_arr[i],
                                                              split_dim, 
                                                              cases_dim, 
                                                              reference_list))
@@ -1196,7 +1206,8 @@ if __name__ == '__main__':
                 list_masks(axial_mask, view='axial')
                 quality_control(axial_mask, shuffled_list, tmp_path, view='axial')
 
-            clear(os.path.dirname(brain_mask_multi))
+            for i in range(0, len(cases_mask_sagittal)):
+                clear(os.path.dirname(cases_mask_sagittal[i]))
 
             webbrowser.open(os.path.join(tmp_path, 'slicesdir_multi/index.html'))
             if args.Sagittal:
@@ -1224,7 +1235,7 @@ if __name__ == '__main__':
 
                 b0_nii = nhdr_to_nifti(b0_nhdr)
             else:
-                b0_nii = os.path.join(directory, input_file) #extract_b0(os.path.join(directory, input_file))
+                b0_nii = extract_b0(os.path.join(directory, input_file))
 
             dimensions = get_dimension(b0_nii)
 
@@ -1250,7 +1261,7 @@ if __name__ == '__main__':
             total_masking_time = end_masking_time - start_total_time - total_preprocessing_time
             print "Masking Time Taken in min = ", round(int(total_masking_time.seconds)/60, 2)
 
-            subject_name = os.path.join(directory, input_file)
+            subject_name = b0_nii #os.path.join(directory, input_file)
 
             multi_view_mask = multi_view_fast(dwi_mask_sagittal, 
                                              dwi_mask_coronal, 

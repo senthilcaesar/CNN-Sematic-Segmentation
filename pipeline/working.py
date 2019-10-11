@@ -71,6 +71,7 @@ from multiprocessing import Process, Manager, Value, Pool
 import multiprocessing as mp
 import cv2
 import sys
+from time import sleep
 import keras
 import scipy as sp
 import scipy.misc, scipy.ndimage.interpolation
@@ -253,6 +254,7 @@ def multi_view_agg(sagittal_SO, coronal_SO, axial_SO, input_file):
 
 
 def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file):
+    
     x = np.load(sagittal_SO)
     y = np.load(coronal_SO)
     z = np.load(axial_SO)
@@ -688,7 +690,8 @@ def clear(directory):
                 filename.endswith('-Warped.nii.gz') | filename.endswith('-0GenericAffine.mat') | \
                 filename.endswith('_affinedMask.nii.gz') | filename.endswith('_originalMask.nii.gz') | \
                 filename.endswith('multi-mask.nii.gz') | filename.endswith('-mask-inverse.nii.gz') | \
-                filename.endswith('-InverseWarped.nii.gz'):
+                filename.endswith('-InverseWarped.nii.gz')| filename.endswith('-FilteredMask.nii.gz') | \
+                filename.endswith('-normalized.nii.gz'):
                 os.unlink(directory + '/' + filename)
 
 
@@ -747,7 +750,7 @@ def ANTS_rigid_body_trans(b0_nii, reference=None):
     output_file = os.path.join(os.path.dirname(input_file), output_name)
 
     if reference is None:
-        reference = '/rfanfs/pnl-zorro/home/sq566/CompNetPipeline/reference/IITmean_t1_256.nii.gz'
+        reference = '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/data/comp/reference/IITmean_b0_256.nii.gz'
 
     trans_matrix = "antsRegistrationSyNQuick.sh -d 3 -f " + reference + " -m " + input_file + " -t r -o " + output_file
     output1 = subprocess.check_output(trans_matrix, shell=True)
@@ -771,7 +774,7 @@ def FSL_rigid_body_trans(b0_nii):
     output_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '-transformed.nii.gz'
     output_file = os.path.join(os.path.dirname(input_file), output_name)
 
-    reference = '/rfanfs/pnl-zorro/home/sq566/CompNetPipeline/reference/IITmean_t1_256.nii.gz'
+    reference = '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/data/comp/reference/IITmean_b0_256.nii.gz'
 
     #Compute Transformation matrix using flirt
     omat_name = case_name[:len(case_name) - (len(SUFFIX_NIFTI_GZ) + 1)] + '.mat'
@@ -890,7 +893,7 @@ def list_masks(mask_list, view='default'):
         print view + " Mask file = ", mask_list[i]
 
 
-def pre_process(lock,subject, split_dim, cases_dim, reference_list):
+def pre_process(lock, subject, split_dim, cases_dim, reference_list):
 
     lock.acquire()
     try:
@@ -924,6 +927,7 @@ def pre_process(lock,subject, split_dim, cases_dim, reference_list):
         else:
             print "File not found ", input_file
             sys.exit(1)
+
     finally:
         lock.release()
 
@@ -933,7 +937,7 @@ def quality_control(mask_list, shuffled_list, tmp_path, view='default'):
     slices = " "
     for i in range(0, len(mask_list)):
         str1 = shuffled_list[i]
-        str2 = os.path.basename(mask_list[i])
+        str2 = mask_list[i]
         slices += str1 + " " + str2 + " "
     
     final = "slicesdir -o" + slices
@@ -1023,19 +1027,17 @@ if __name__ == '__main__':
                 split_dim = manager.list()
                 cases_dim = manager.list()
                 reference_list = manager.list()
-                omat_list = []
-                
-
+                omat_list = []                
                 jobs = []
-                lock = mp.Lock()
 
+                lock = mp.Lock()
                 for i in range(0,len(case_arr)):
                     p = mp.Process(target=pre_process, args=(lock,case_arr[i],
                                                              split_dim, 
                                                              cases_dim, 
                                                              reference_list))
-                    jobs.append(p)
                     p.start()
+                    jobs.append(p)
         
                 for process in jobs:
                     process.join()

@@ -690,8 +690,8 @@ def clear(directory):
                 filename.endswith('-Warped.nii.gz') | filename.endswith('-0GenericAffine.mat') | \
                 filename.endswith('_affinedMask.nii.gz') | filename.endswith('_originalMask.nii.gz') | \
                 filename.endswith('multi-mask.nii.gz') | filename.endswith('-mask-inverse.nii.gz') | \
-                filename.endswith('-InverseWarped.nii.gz')| filename.endswith('-FilteredMask.nii.gz') | \
-                filename.endswith('-normalized.nii.gz'):
+                filename.endswith('-InverseWarped.nii.gz') | filename.endswith('-FilteredMask.nii.gz') | \
+                filename.endswith('_FilteredMask.nii.gz') | filename.endswith('-normalized.nii.gz'):
                 os.unlink(directory + '/' + filename)
 
 

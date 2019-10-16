@@ -389,8 +389,8 @@ def extract_b0(input_file):
         else:
             case_prefix = case_name[:len(case_name) - len(SUFFIX_NIFTI)]
 
-        bvec_file = case_dir + '/' + case_prefix + 'bvec'
-        bval_file = case_dir + '/' + case_prefix + 'bval'
+        bvec_file = case_dir + '/' + case_prefix + 'bvecs'
+        bval_file = case_dir + '/' + case_prefix + 'bvals'
 
         if path.exists(bvec_file):
             print "File exist ", bvec_file

@@ -2,7 +2,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:       PNL BWH                 
 # Written:      07/02/2019                             
-# Last Updated:     01/04/2020
+# Last Updated:     09/30/2019
 # Purpose:          Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -789,7 +789,7 @@ if __name__ == '__main__':
         
                 for process in jobs:
                     process.join()
-                print(list(reference_list))
+                #print(list(reference_list))
 
                 reference_list = list(reference_list)
                 #split_dim = list(split_dim)
@@ -806,13 +806,13 @@ if __name__ == '__main__':
                 transformed_cases.append(subject_ANTS[0])
                 omat_list.append(subject_ANTS[1])
 
-            print(transformed_cases)
+            #print(transformed_cases)
 
             p1 = Pool(processes=mp.cpu_count())
             data_n = p1.map(normalize, transformed_cases)
             p1.close()
 
-            print(data_n)
+            #print(data_n)
             
             count = 0
             for b0_nifti in data_n:

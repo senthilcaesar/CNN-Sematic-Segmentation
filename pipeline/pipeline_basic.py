@@ -2,7 +2,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:       PNL BWH                 
 # Written:      07/02/2019                             
-# Last Updated:     09/30/2019
+# Last Updated:     01/04/2020
 # Purpose:          Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -858,7 +858,7 @@ if __name__ == '__main__':
 
             end_preprocessing_time = datetime.datetime.now()
             total_preprocessing_time = end_preprocessing_time - start_total_time
-            print "Pre-Processing Time Taken in min = ", round(int(total_preprocessing_time.seconds)/60, 2)
+            print "Pre-Processing Time Taken = ", round(int(total_preprocessing_time.seconds)/60, 2), " min"
 
             dwi_mask_sagittal = predict_mask(cases_file_s, view='sagittal', threshold=args.thr)
             dwi_mask_coronal = predict_mask(cases_file_c, view='coronal', threshold=args.thr)
@@ -866,7 +866,7 @@ if __name__ == '__main__':
 
             end_masking_time = datetime.datetime.now()
             total_masking_time = end_masking_time - start_total_time - total_preprocessing_time
-            print "Masking Time Taken in min = ", round(int(total_masking_time.seconds)/60, 2)
+            print "Masking Time Taken = ", round(int(total_masking_time.seconds)/60, 2), " min"
 
             print "Splitting files...."
 
@@ -970,4 +970,4 @@ if __name__ == '__main__':
 
         end_total_time = datetime.datetime.now()
         total_t = end_total_time - start_total_time
-print "Total Time Taken in min = ", round(int(total_t.seconds)/60, 2)
+print "Total Time Taken = ", round(int(total_t.seconds)/60, 2), " min"

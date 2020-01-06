@@ -2,28 +2,24 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:       PNL BWH                 
 # Written:      07/02/2019                             
-# Last Updated:     09/30/2019
+# Last Updated:     01/06/2020
 # Purpose:          Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
 """
-CompNet.py
+pipeline.py
 ~~~~~~~~~~
-1)  Accepts the diffusion image in *.nhdr,*.nrrd,*.nii.gz,*.nii format
-2)  Checks if the Image axis is in the correct order for *.nhdr and *.nrrd file
-3)  Extracts b0 Image
-4)  Converts nhdr to nii.gz
-5)  Re sample nii.gz file to 246 x 246
-6)  Pads the Image adding zeros to 256 x 256
-7)  Normalize the Image by 99th percentile
-8)  Applys Rigid-Body tranformation to standard MNI space using
-9)  Neural network brain mask prediction across the 3 principal axis
-10) Performs Multi View Aggregation
-11) Converts npy to nhdr,nrrd,nii,nii.gz
-12) Applys Inverse tranformation
-13) Down sample to original resolution
-14) Peforms Binary Dilation and Erosion
-15) Cleaning
+01)  Accepts the diffusion image in *.nhdr,*.nrrd,*.nii.gz,*.nii format
+02)  Checks if the Image axis is in the correct order for *.nhdr and *.nrrd file
+03)  Extracts b0 Image
+04)  Converts nhdr to nii.gz
+05)  Applys Rigid-Body tranformation to standard MNI space using
+06)  Normalize the Image by 99th percentile
+07)  Neural network brain mask prediction across the 3 principal axis
+08)  Performs Multi View Aggregation
+09)  Converts npy to nhdr,nrrd,nii,nii.gz
+10)  Applys Inverse tranformation
+11)  Cleaning
 """
 
 

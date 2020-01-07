@@ -323,8 +323,9 @@ def extract_b0(input_file):
     """
     Parameters
     ---------
-    Nhdr_file   : str
+    input_file   : str
                   Accepts nhdr filename in *.nhdr format
+                  Accepts nifti filename in *.nii.gz format
     Returns
     --------
     output_file : str
@@ -449,9 +450,6 @@ def npy_to_nhdr(b0_normalized_cases, cases_mask_arr, sub_name, view='default', r
     sub_name            : str or list
                           str  (single input case filename which is in *.nhdr format)
                           list (list of input case filename which is in *.nhdr format)
-    dim                 : tuple or list of tuple
-                          tuple (dimension of single case in tuple format, (128,176,256))
-                          list of tuples (dimension of all cases)
     view                : str
                           Three principal axes ( Sagittal, Coronal and Axial )
 

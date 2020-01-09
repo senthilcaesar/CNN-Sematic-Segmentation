@@ -2,7 +2,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:       PNL BWH                 
 # Written:      07/02/2019                             
-# Last Updated:     01/06/2020
+# Last Updated:     01/09/2020
 # Purpose:          Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -352,12 +352,22 @@ def extract_b0(input_file):
             print "File exist ", bvec_file
         else:
             print "File not found ", bvec_file
+            bvec_file = case_dir + '/' + case_prefix + 'bvecs'
+            if path.exists(bvec_file):
+                print "File exist ", bvec_file
+            else:
+                print "File not found ", bvec_file
             sys.exit(1)
 
         if path.exists(bval_file):
             print "File exist ", bval_file
         else:
             print "File not found ", bval_file
+            bval_file = case_dir + '/' + case_prefix + 'bvals'
+            if path.exists(bval_file):
+                print "File exist ", bval_file
+            else:
+                print "File not found ", bval_file
             sys.exit(1)
 
         # dwiextract only works for nifti files
@@ -632,7 +642,7 @@ def str2bool(v):
     elif v.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
     else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+        raise argparse.ArgumentTypeError('Boolean value expected...')
 
 
 def list_masks(mask_list, view='default'):
@@ -789,9 +799,9 @@ if __name__ == '__main__':
                 #split_dim = list(split_dim)
                 #cases_dim = list(cases_dim)
 
-                """
-                Enable Multi core Processing for ANTS Registration
-                """
+            """
+            Enable Multi core Processing for ANTS Registration
+            """
             p = Pool(processes=mp.cpu_count())
             data = p.map(ANTS_rigid_body_trans, reference_list)
             p.close()
@@ -814,7 +824,6 @@ if __name__ == '__main__':
                 #img_normalize = normalize(b0_nifti)
                 img = nib.load(b0_nifti)
 
-
                 imgU16_sagittal = img.get_data().astype(np.float32)  # sagittal view
                 imgU16_coronal = np.swapaxes(imgU16_sagittal, 0, 1)  # coronal view
                 imgU16_axial = np.swapaxes(imgU16_sagittal, 0, 2)    # Axial view
@@ -836,7 +845,8 @@ if __name__ == '__main__':
             f_handle_s.close()
             f_handle_c.close()
             f_handle_a.close()
-            print "Merging npy files"
+
+            print "Merging npy files..."
             cases_file_s = storage + '/'+ unique + '-casefile-sagittal.npy'
             cases_file_c = storage + '/'+ unique + '-casefile-coronal.npy'
             cases_file_a = storage + '/'+ unique + '-casefile-axial.npy'
@@ -845,14 +855,14 @@ if __name__ == '__main__':
             merge_c = np.memmap(binary_file_c, dtype=np.float32, mode='r+', shape=(256 * len(reference_list), y_dim, z_dim))
             merge_a = np.memmap(binary_file_a, dtype=np.float32, mode='r+', shape=(256 * len(reference_list), y_dim, z_dim))
 
-            print "Saving data to disk"
+            print "Saving data to disk..."
             np.save(cases_file_s, merge_s)
             np.save(cases_file_c, merge_c)
             np.save(cases_file_a, merge_a)
 
             end_preprocessing_time = datetime.datetime.now()
             total_preprocessing_time = end_preprocessing_time - start_total_time
-            print "Pre-Processing Time Taken = ", round(int(total_preprocessing_time.seconds)/60, 2), " min"
+            print "Pre-Processing Time Taken : ", round(int(total_preprocessing_time.seconds)/60, 2), " min"
 
             dwi_mask_sagittal = predict_mask(cases_file_s, view='sagittal', threshold=args.thr)
             dwi_mask_coronal = predict_mask(cases_file_c, view='coronal', threshold=args.thr)
@@ -860,7 +870,7 @@ if __name__ == '__main__':
 
             end_masking_time = datetime.datetime.now()
             total_masking_time = end_masking_time - start_total_time - total_preprocessing_time
-            print "Masking Time Taken = ", round(int(total_masking_time.seconds)/60, 2), " min"
+            print "Masking Time Taken : ", round(int(total_masking_time.seconds)/60, 2), " min"
 
             print "Splitting files...."
 
@@ -892,7 +902,7 @@ if __name__ == '__main__':
                                                 omat=list(omat_list[i].split()))
 
 
-                print "Mask file = ", brain_mask_multi
+                print "Mask file : ", brain_mask_multi
                 multi_mask.append(brain_mask_multi[0])
 
             quality_control(multi_mask, shuffled_list, tmp_path, view='multi')
@@ -961,7 +971,6 @@ if __name__ == '__main__':
             if args.Axial:
                 webbrowser.open(os.path.join(tmp_path, 'slicesdir_axial/index.html'))
 
-
         end_total_time = datetime.datetime.now()
         total_t = end_total_time - start_total_time
-print "Total Time Taken = ", round(int(total_t.seconds)/60, 2), " min"
+print "Total Time Taken : ", round(int(total_t.seconds)/60, 2), " min"

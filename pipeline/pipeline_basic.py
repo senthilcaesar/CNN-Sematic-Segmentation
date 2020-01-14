@@ -128,7 +128,7 @@ def predict_mask(input_file, view='default', threshold=0):
         return dice_coef(y_true, y_pred)
 
     # load json and create model
-    json_file = open('/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/data/comp/CompNetBasicModel.json', 'r')
+    json_file = open('/rfanfs/pnl-zorro/software/CNN-Diffusion-BrainMask-Trained-Model-Suheyla/CompNetBasicModel.json', 'r')
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model = model_from_json(loaded_model_json)
@@ -142,7 +142,7 @@ def predict_mask(input_file, view='default', threshold=0):
         optimal = '08'
     # load weights into new model
     loaded_model.load_weights(
-        '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/data/comp/weights-' + view + '-improvement-' + optimal + '.h5')
+        '/rfanfs/pnl-zorro/software/CNN-Diffusion-BrainMask-Trained-Model-Suheyla/weights-' + view + '-improvement-' + optimal + '.h5')
 
     # evaluate loaded model on test data
     loaded_model.compile(optimizer=Adam(lr=1e-5),
@@ -598,7 +598,7 @@ def ANTS_rigid_body_trans(b0_nii, reference=None):
     output_file = os.path.join(os.path.dirname(input_file), output_name)
 
     if reference is None:
-        reference = '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/data/comp/reference/IITmean_b0_256.nii.gz'
+        reference = '/rfanfs/pnl-zorro/software/CNN-Diffusion-BrainMask-Trained-Model-Suheyla/IITmean_b0_256.nii.gz'
 
     trans_matrix = "antsRegistrationSyNQuick.sh -d 3 -f " + reference + " -m " + input_file + " -t r -o " + output_file
     output1 = subprocess.check_output(trans_matrix, shell=True)

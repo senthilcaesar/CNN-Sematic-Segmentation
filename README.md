@@ -3,11 +3,11 @@
 ## Tool:CompNet: Segmenting diffusion brain MRI
 
 The code for training, as well as the Trained Models are provided here.
-The model is trained on 1000 b0 diffusion volumes.
+The model is trained on 1500 b0 diffusion volumes.
 
-> Model Architecture: https://drive.google.com/open?id=1XlNhAjX0eg6Omz61nWfx090oGCfepw7l
+> Model Architecture: https://drive.google.com/open?id=163KTt2ilmz1RqUgXcWu6IAH1DLO3gOoI
 
-> Trained Model Weights: https://drive.google.com/open?id=1FRsDkVzQDjrR3kM3hGZ6iAlSyQuKrvOs
+> Trained Model Weights: https://drive.google.com/open?id=111x4xYxzDpUxlgNV83llpQdI3CxMVMdd
 
 Let us know if you face any problems running the code by posting in Issues.
 
@@ -23,21 +23,19 @@ Guha Roy, A., Conjeti, S., Navab, N., and Wachinger, C. 2018. QuickNAT: A Fully 
 
 You need to have following in order for this library to work as expected
 
-1)  python 2.7
-2)  pip >= 19.0
-3)  numpy >= 1.14.0
-4)  nibabel >= 2.2.1
-5)  nilearn >= 0.5.0
-6)  opencv-python >= 3.4.1.15
-7)  pandas >= 0.23.0
-8)  scikit-image >= 0.13.1
-9)  scikit-learn >= 0.20.0
-10) tensorflow >= 1.8.0
-11) tensorflow-gpu >= 1.8.0
-12) keras >= 2.1.6
-13) cudatoolkit = 9.0
-14) cudnn = 7.0.5
-15) gputil = 1.4.0
+01)  python 2.7
+02)  pip >= 19.0
+03)  numpy >= 1.14.0
+04)  nibabel >= 2.2.1
+05)  nilearn >= 0.5.0
+06)  opencv-python >= 3.4.1.15
+07)  pandas >= 0.23.0
+08)  scikit-image >= 0.13.1
+09)  scikit-learn >= 0.20.0
+10)  tensorflow-gpu >= 1.12.0
+11)  keras >= 2.1.6
+12)  cudatoolkit = 9.0
+13)  cudnn = 7.0.5
 
 ### Code Author
 * Raunak Dey - [raun1](https://github.com/raun1)
@@ -48,10 +46,10 @@ The proposed networks are designed in the framework of encoder-decoder networks 
 branch generate brain mask
 > 3) Reconstruction Branch - It provides direct feedback to the segmentation and
 complementary branche and expects reasonable predictions from them as input to reconstruct the original input image.
-![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/CompNet%20Arch.png)
+![Screenshot](https://github.com/senthilcaesar/CNN-Diffusion-MRIBrain-Segmentation/blob/master/CompNet%20Arch.png)
 
 
 ### Multi View Aggregation step:
 > The approach is to train 3 separate networks for three principal axes ( Sagittal, Coronal and axial ) and 
 to perform multi-view aggregation step that combines segmentations from models trained on 2D slices along three principal axes: coronal, sagittal and axial. The final segmentation would be obtained by combining the probability maps from all three segmentation.
-![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/Multiview.png)
+![Screenshot](https://github.com/senthilcaesar/CNN-Diffusion-MRIBrain-Segmentation/blob/master/Multiview.png)

@@ -2,7 +2,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:       PNL BWH                 
 # Written:      07/02/2019                             
-# Last Updated:     01/09/2020
+# Last Updated:     01/15/2020
 # Purpose:          Python pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -94,7 +94,7 @@ SUFFIX_TXT = "txt"
 output_mask = []
 
 
-def predict_mask(input_file, view='default', threshold=0):
+def predict_mask(input_file, view='default'):
     """
     Parameters
     ----------
@@ -543,7 +543,7 @@ def clear(directory):
                 os.unlink(directory + '/' + filename)
 
 
-def split(cases_file, case_arr, view='default', threshold=0):
+def split(cases_file, case_arr, view='default'):
     """
     Parameters
     ---------
@@ -570,14 +570,8 @@ def split(cases_file, case_arr, view='default', threshold=0):
         end = start + 256
         casex = SO[start:end, :, :]
         if view == 'coronal':
-            if threshold == 1 or threshold == 2:
-                print("Ignoring coronal eyes slices")
-                casex[180:,:,:] = 0.0 
             casex = np.swapaxes(casex, 0, 1)
         elif view == 'axial':
-            if threshold == 2:
-                print("Ignoring axial eyes slices")
-                casex[0:84,:,:] = 0.0
             casex = np.swapaxes(casex, 0, 2)
         input_file = str(case_arr[i])
         output_file = input_file[:len(input_file) - (len(SUFFIX_NHDR) + 1)] + '-' + view +'_SO.npy'
@@ -727,7 +721,7 @@ if __name__ == '__main__':
                         const=True, default=False,
                         help="Activate sagittal Mask (yes/true/y/1)")
 
-    parser.add_argument('-threshold', type=int, dest='thr', default=0, help='If the cases have more noise use threshold ( 1/2 )')
+    parser.add_argument('-core', type=int, dest='cr', default=8, help='No of cores')
 
     try:
         args = parser.parse_args()
@@ -802,7 +796,7 @@ if __name__ == '__main__':
             """
             Enable Multi core Processing for ANTS Registration
             """
-            p = Pool(processes=mp.cpu_count())
+            p = Pool(processes=args.cr)
             data = p.map(ANTS_rigid_body_trans, reference_list)
             p.close()
 
@@ -864,9 +858,9 @@ if __name__ == '__main__':
             total_preprocessing_time = end_preprocessing_time - start_total_time
             print "Pre-Processing Time Taken : ", round(int(total_preprocessing_time.seconds)/60, 2), " min"
 
-            dwi_mask_sagittal = predict_mask(cases_file_s, view='sagittal', threshold=args.thr)
-            dwi_mask_coronal = predict_mask(cases_file_c, view='coronal', threshold=args.thr)
-            dwi_mask_axial = predict_mask(cases_file_a, view='axial', threshold=args.thr)
+            dwi_mask_sagittal = predict_mask(cases_file_s, view='sagittal')
+            dwi_mask_coronal = predict_mask(cases_file_c, view='coronal')
+            dwi_mask_axial = predict_mask(cases_file_a, view='axial')
 
             end_masking_time = datetime.datetime.now()
             total_masking_time = end_masking_time - start_total_time - total_preprocessing_time
@@ -874,9 +868,9 @@ if __name__ == '__main__':
 
             print "Splitting files...."
 
-            cases_mask_sagittal = split(dwi_mask_sagittal, shuffled_list, view='sagittal', threshold=args.thr)
-            cases_mask_coronal = split(dwi_mask_coronal, shuffled_list, view='coronal', threshold=args.thr)
-            cases_mask_axial = split(dwi_mask_axial, shuffled_list, view='axial', threshold=args.thr)
+            cases_mask_sagittal = split(dwi_mask_sagittal, shuffled_list, view='sagittal')
+            cases_mask_coronal = split(dwi_mask_coronal, shuffled_list, view='coronal')
+            cases_mask_axial = split(dwi_mask_axial, shuffled_list, view='axial')
 
             multi_mask = []
             for i in range(0, len(cases_mask_sagittal)):

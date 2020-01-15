@@ -707,21 +707,21 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-i', action='store', dest='dwi', type=str,
-                        help=" input single diffusion image or a caselist ")
+                        help=" input caselist file in txt format")
 
     parser.add_argument("-axial", type=str2bool, dest='Axial', nargs='?',
                         const=True, default=False,
-                        help="Activate axial Mask (yes/true/y/1)")
+                        help="generate axial Mask (yes/true/y/1)")
 
     parser.add_argument("-coronal", type=str2bool, dest='Coronal', nargs='?',
                         const=True, default=False,
-                        help="Activate coronal Mask (yes/true/y/1)")
+                        help="generate coronal Mask (yes/true/y/1)")
 
     parser.add_argument("-sagittal", type=str2bool, dest='Sagittal', nargs='?',
                         const=True, default=False,
-                        help="Activate sagittal Mask (yes/true/y/1)")
+                        help="generate sagittal Mask (yes/true/y/1)")
 
-    parser.add_argument('-core', type=int, dest='cr', default=8, help='No of cores')
+    parser.add_argument('-ncore', type=int, dest='cr', default=8, help='No of cores ( int )')
 
     try:
         args = parser.parse_args()

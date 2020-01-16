@@ -28,7 +28,7 @@ import os
 import os.path
 from os import path
 import webbrowser
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress tensor flow message
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress tensor flow message
 import GPUtil 
 
 # Set CUDA_DEVICE_ORDER so the IDs assigned by CUDA match those from nvidia-smi
@@ -37,7 +37,7 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 # Get the first available GPU
 try:
     DEVICE_ID_LIST = GPUtil.getFirstAvailable()
-    DEVICE_ID = DEVICE_ID_LIST[0] # grab first element from list
+    DEVICE_ID = DEVICE_ID_LIST[0] # Grab first element from list
     print "GPU found...", DEVICE_ID
 
     # Set CUDA_VISIBLE_DEVICES to mask out all other GPUs than the first available device id
@@ -721,7 +721,7 @@ if __name__ == '__main__':
                         const=True, default=False,
                         help="generate sagittal Mask (yes/true/y/1)")
 
-    parser.add_argument('-ncore', type=int, dest='cr', default=8, help='No of cores ( int )')
+    parser.add_argument('-nproc', type=int, dest='cr', default=8, help='number of processes to use')
 
     try:
         args = parser.parse_args()

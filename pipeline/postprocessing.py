@@ -2,7 +2,7 @@ from __future__ import division
 # -----------------------------------------------------------------
 # Author:       Senthil Palanivelu, Tashrif Billah                 
 # Written:      01/22/2020                             
-# Last Updated:     01/31/2020
+# Last Updated:     02/12/2020
 # Purpose:          Post-processing pipeline for diffusion brain masking
 # -----------------------------------------------------------------
 
@@ -29,15 +29,7 @@ import os.path
 import pathlib
 import nibabel as nib
 import numpy as np
-import scipy.ndimage as nd
-from os import path
-from multiprocessing import Process, Manager, Value, Pool
-import multiprocessing as mp
-import sys
 from time import sleep
-import scipy as sp
-import scipy.misc, scipy.ndimage.interpolation
-import os
 
 # suffixes
 SUFFIX_NIFTI = "nii"
@@ -147,29 +139,6 @@ def multi_view_fast(sagittal_SO, coronal_SO, axial_SO, input_file):
 
     SO = multi_view.astype('float32')
     np.save(output_file, SO)
-    return output_file
-
-
-def nhdr_to_nifti(Nhdr_file):
-    """
-    Parameters
-    ---------
-    Nhdr_file   : str
-                  Accepts nhdr filename in *.nhdr format
-    Returns
-    --------
-    output_file : str
-                  Converted nifti file which is stored in disk
-                  Uses "ConvertBetweenFilename" program
-    """
-    print ("Converting nhdr to nifti")
-    input_file = Nhdr_file
-    case_name = os.path.basename(input_file)
-    output_name = case_name[:len(case_name) - len(SUFFIX_NHDR)] + 'nii.gz'
-    output_file = os.path.join(os.path.dirname(input_file), output_name)
-    bashCommand = 'ConvertBetweenFileFormats ' + input_file + " " + output_file
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
     return output_file
 
 
@@ -412,26 +381,18 @@ if __name__ == '__main__':
     dwi_mask_sagittal = masked_cases_npy[0]
     dwi_mask_coronal = masked_cases_npy[1]
     dwi_mask_axial = masked_cases_npy[2]
-
-    shuffled_file = storage + '/' + "shulled_cases.txt"
+    
     transformed_file = storage + '/' + "ants_cases.txt"
-    reference_file = storage + '/' + "reference_cases.txt"
+    target_file = storage + '/' + "target_cases.txt"
     omat_file = storage + '/' + "mat_cases.txt"
-
-    shuffled_list = [line.rstrip('\n') for line in open(shuffled_file)]
     transformed_cases = [line.rstrip('\n') for line in open(transformed_file)]
-    reference_list = [line.rstrip('\n') for line in open(reference_file)]
+    target_list = [line.rstrip('\n') for line in open(target_file)]
     omat_list = [line.rstrip('\n') for line in open(omat_file)]
 
-    #print(shuffled_list)
-    #print(transformed_cases)
-    #print(reference_list)
-    #print(omat_list)
-
     print ("Splitting files....")
-    cases_mask_sagittal = split(dwi_mask_sagittal, shuffled_list, view='sagittal')
-    cases_mask_coronal = split(dwi_mask_coronal, shuffled_list, view='coronal')
-    cases_mask_axial = split(dwi_mask_axial, shuffled_list, view='axial')
+    cases_mask_sagittal = split(dwi_mask_sagittal, target_list, view='sagittal')
+    cases_mask_coronal = split(dwi_mask_coronal, target_list, view='coronal')
+    cases_mask_axial = split(dwi_mask_axial, target_list, view='axial')
 
     multi_mask = []
     for i in range(0, len(cases_mask_sagittal)):
@@ -439,12 +400,7 @@ if __name__ == '__main__':
         sagittal_SO = cases_mask_sagittal[i]
         coronal_SO = cases_mask_coronal[i]
         axial_SO = cases_mask_axial[i]
-        input_file = shuffled_list[i]
-
-        #print(sagittal_SO)
-        #print(coronal_SO)
-        #print(axial_SO)
-        #print(input_file)
+        input_file = target_list[i]
 
         multi_view_mask = multi_view_fast(sagittal_SO, 
                                           coronal_SO, 
@@ -453,14 +409,14 @@ if __name__ == '__main__':
 
         brain_mask_multi = npy_to_nhdr(list(transformed_cases[i].split()), 
                                        list(multi_view_mask.split()), 
-                                       list(shuffled_list[i].split()),
+                                       list(target_list[i].split()),
                                        view='multi', 
-                                       reference=list(reference_list[i].split()), 
+                                       reference=list(target_list[i].split()), 
                                        omat=list(omat_list[i].split()))
         print ("Mask file : ", brain_mask_multi)
         multi_mask.append(brain_mask_multi[0])
 
-    quality_control(multi_mask, shuffled_list, tmp_path, view='multi')
+    quality_control(multi_mask, target_list, tmp_path, view='multi')
 
     if args.Sagittal:
         omat = omat_list
@@ -471,10 +427,10 @@ if __name__ == '__main__':
                                         cases_mask_sagittal, 
                                         shuffled_list,
                                         view='sagittal', 
-                                        reference=reference_list,
+                                        reference=target_list,
                                         omat=omat)
         list_masks(sagittal_mask, view='sagittal')
-        quality_control(sagittal_mask, shuffled_list, tmp_path, view='sagittal')
+        quality_control(sagittal_mask, target_list, tmp_path, view='sagittal')
 
     if args.Coronal:
         omat = omat_list
@@ -485,10 +441,10 @@ if __name__ == '__main__':
                                         cases_mask_coronal, 
                                         shuffled_list,
                                         view='coronal', 
-                                        reference=reference_list,
+                                        reference=target_list,
                                         omat=omat)
         list_masks(coronal_mask, view='coronal')
-        quality_control(coronal_mask, shuffled_list, tmp_path, view='coronal')
+        quality_control(coronal_mask, target_list, tmp_path, view='coronal')
 
     if args.Axial:
         omat = omat_list
@@ -499,13 +455,13 @@ if __name__ == '__main__':
                                         cases_mask_axial, 
                                         shuffled_list,
                                         view='axial', 
-                                        reference=reference_list,
+                                        reference=target_list,
                                         omat=omat)
         list_masks(axial_mask, view='axial')
-        quality_control(axial_mask, shuffled_list, tmp_path, view='axial')
+        quality_control(axial_mask, target_list, tmp_path, view='axial')
 
-    #for i in range(0, len(cases_mask_sagittal)):
-    #    clear(os.path.dirname(cases_mask_sagittal[i]))
+    for i in range(0, len(cases_mask_sagittal)):
+        clear(os.path.dirname(cases_mask_sagittal[i]))
 
     webbrowser.open(os.path.join(tmp_path, 'slicesdir_multi/index.html'))
     if args.Sagittal:

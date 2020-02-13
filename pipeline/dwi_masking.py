@@ -1,6 +1,6 @@
 from __future__ import division
 # -----------------------------------------------------------------
-# Author:       Senthil Palanivelu, Tashrif Billah                 
+# Author:       Senthil Palanivelu               
 # Written:      01/22/2020                             
 # Last Updated:     02/12/2020
 # Purpose:          CNN diffusion brain masking

@@ -5,12 +5,6 @@
 The code for training, as well as the Trained Models are provided here.
 The model is trained on 1500 b0 diffusion volumes.
 
-> Model Architecture: https://drive.google.com/open?id=163KTt2ilmz1RqUgXcWu6IAH1DLO3gOoI
-
-> Trained Model Weights: https://drive.google.com/open?id=111x4xYxzDpUxlgNV83llpQdI3CxMVMdd
-
-> Reference b0 Image: https://drive.google.com/open?id=1Mc8ZXCguRNl67wxY7z8EM9SMXGnt7VEc
-
 Let us know if you face any problems running the code by posting in Issues.
 
 If you use this code please cite:
@@ -33,6 +27,39 @@ You need to have following in order for this library to work as expected
 06)  keras >= 2.2.4
 07)  cudatoolkit = 9.0
 08)  cudnn = 7.0.5
+
+## Installation
+
+### Install prerequisites for running the pipeline
+
+01) conda create -n myenv python=3.6
+02) conda activate myenv
+03) conda install -n myenv cudatoolkit=9.0
+04) conda install -n myenv cudnn=7.0.5
+05) conda install -c aramislab ants=2.2.0
+06) pip install tensorflow==1.12.0
+07) pip install tensorflow-gpu==1.12.0
+08) pip install keras==2.2.4
+09) pip install nibabel
+10) pip install gputil
+
+### Download model architecture, weights and IIT mean b0 template
+
+Download the following data and place them in model_folder/ directory
+> Model Architecture: https://drive.google.com/open?id=163KTt2ilmz1RqUgXcWu6IAH1DLO3gOoI
+
+> Trained Model Weights: https://drive.google.com/open?id=111x4xYxzDpUxlgNV83llpQdI3CxMVMdd
+
+> Reference b0 Image: https://drive.google.com/open?id=1Mc8ZXCguRNl67wxY7z8EM9SMXGnt7VEc
+
+### Running the pipeline
+
+##### Step1
+> python preprocessing.py -i subject/cases.txt -ref model_folder/IIT_mean_b0.nii.gz
+##### Step 2
+> python dwi_masking -i subject/cases.txt -f model_folder/
+##### Step 3
+> python postprocessing -i subject/cases.txt
 
 ### Code Author
 * Raunak Dey - [raun1](https://github.com/raun1)

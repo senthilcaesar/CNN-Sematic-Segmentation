@@ -5,7 +5,7 @@
 The code for training, as well as the Trained Models are provided here.
 The model is trained on 1500 b0 diffusion volumes.
 
-Let us know if you face any problems running the code by posting in Issues.
+Let me know if you face any problems running the code by posting in Issues.
 
 If you use this code please cite:
 

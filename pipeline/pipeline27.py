@@ -1,6 +1,6 @@
 from __future__ import division
 # -----------------------------------------------------------------
-# Author:       PNL BWH                 
+# Author:       Senthil Palanivelu               
 # Written:      07/02/2019                             
 # Last Updated:     01/15/2020
 # Purpose:          Python pipeline for diffusion brain masking

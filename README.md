@@ -5,7 +5,7 @@
 The code for training, as well as the Trained Models are provided here.
 The model is trained on 1500 b0 diffusion volumes.
 
-Let me know if you face any problems running the code by posting in Issues.
+Let us know if you face any problems running the code by posting in Issues.
 
 If you use this code please cite:
 
@@ -45,7 +45,7 @@ You need to have following in order for this library to work as expected
 
 ### Download model architecture, weights and IIT mean b0 template
 
-Download the following data and place them in model_folder/ directory
+Download the following data and place them under model_folder/ directory
 > Model Architecture: https://drive.google.com/open?id=163KTt2ilmz1RqUgXcWu6IAH1DLO3gOoI
 
 > Trained Model Weights: https://drive.google.com/open?id=111x4xYxzDpUxlgNV83llpQdI3CxMVMdd
@@ -55,11 +55,19 @@ Download the following data and place them in model_folder/ directory
 ### Running the pipeline
 
 ##### Step1
-> python preprocessing.py -i subject/cases.txt -ref model_folder/IIT_mean_b0.nii.gz
+```
+python preprocessing.py -i subject/cases.txt -ref model_folder/IITmean_b0_256.nii.gz
+```
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Note: cases.txt should contain the full path to the diffusion volumes
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/home/pycharm/data/compnet/subject01/subject01_dwi.nii.gz
 ##### Step 2
-> python dwi_masking -i subject/cases.txt -f model_folder/
+```
+python dwi_masking -i subject/cases.txt -f model_folder/
+```
 ##### Step 3
-> python postprocessing -i subject/cases.txt
+```
+python postprocessing -i subject/cases.txt
+```
 
 ### Code Author
 * Raunak Dey - [raun1](https://github.com/raun1)

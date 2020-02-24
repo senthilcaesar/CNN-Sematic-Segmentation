@@ -480,6 +480,8 @@ def remove_string(input_file, output_file):
 
 def quality_control(mask_list, shuffled_list, tmp_path, view='default'):
 
+    '''The slicesdir command takes the list of images and creates a simple web-page containing snapshots for each of the images. 
+    Once it has finished running it tells you the name of the web page to open in your web browser, to view the snapshots'''
     slices = " "
     for i in range(0, len(mask_list)):
         str1 = shuffled_list[i]

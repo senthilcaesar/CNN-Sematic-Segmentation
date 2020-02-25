@@ -40,14 +40,19 @@ Activate the conda environment:
     
 ### Install prerequisites for running the pipeline
 
+#### For CPU
+01) pip install tensorflow==1.12.0
+
+#### For GPU
 01) conda install cudatoolkit=9.0
 02) conda install cudnn=7.0.5
-03) conda install -c pnlbwh ants
-04) pip install tensorflow==1.12.0
-05) pip install tensorflow-gpu==1.12.0
-06) pip install keras==2.2.4
-07) pip install nibabel
-18) pip install gputil
+03) pip install tensorflow-gpu==1.12.0
+
+#### For Either CPU or GPU
+01) conda install -c pnlbwh ants
+02) pip install keras==2.2.4
+03) pip install nibabel
+14) pip install gputil
 
 ### Setting CUDA Path
 The NVIDIA graphics driver and CUDA compilier are already installed on machines that support CUDA. However, one must set environment variables in order to run and write CUDA enabled programs.
@@ -64,29 +69,19 @@ Log out and back in for the changes to take effect.
 
 ### Download model architecture, weights and IIT mean b0 template
 
-Download the following data and place them under model_folder/ directory
-> Model Architecture: https://drive.google.com/open?id=163KTt2ilmz1RqUgXcWu6IAH1DLO3gOoI
-
-> Trained Model Weights: https://drive.google.com/open?id=111x4xYxzDpUxlgNV83llpQdI3CxMVMdd
-
-> Reference b0 Image: https://drive.google.com/open?id=1Mc8ZXCguRNl67wxY7z8EM9SMXGnt7VEc
+Download the following data and place them under `model_folder/` directory
+```
+pip install gdown
+gdown --id 15dJ-ZpRznTlcU6h4LLGUOSPSH6qY1xbg --output trainedmodel.zip
+```
 
 ### Running the pipeline
 
-##### Step1
 ```
-python preprocessing.py -i subject/cases.txt -ref model_folder/IITmean_b0_256.nii.gz
+python dwi_masking.py -i subject/cases.txt -ref model_folder/IITmean_b0_256.nii.gz -f model_folder/
 ```
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Note: cases.txt should contain the full path to the diffusion volumes
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/home/pycharm/data/compnet/subject01/subject01_dwi.nii.gz
-##### Step 2
-```
-python dwi_masking.py -i subject/cases.txt -f model_folder/
-```
-##### Step 3
-```
-python postprocessing.py -i subject/cases.txt
-```
 
 ## Code Author
 * Raunak Dey - [raun1](https://github.com/raun1)

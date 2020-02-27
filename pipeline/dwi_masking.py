@@ -1,7 +1,7 @@
 from __future__ import division
 # -----------------------------------------------------------------
-# Author:       Senthil Palanivelu, Tashrif Billah                 
-# Written:      01/22/2020                             
+# Author:       Senthil Palanivelu               
+# Written:      07/22/2019                             
 # Last Updated:     02/25/2020
 # Purpose:          Pipeline for diffusion brain masking
 # -----------------------------------------------------------------

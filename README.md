@@ -89,8 +89,6 @@ python dwi_masking.py -i cases.txt -f model_folder
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Note: cases.txt should contain the full path to the diffusion volumes
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/home/pycharm/data/compnet/subject01/subject01_dwi.nii.gz
 
-## Code Author
-* Raunak Dey - [raun1](https://github.com/raun1)
 ## Model Architecture
 The proposed networks are designed in the framework of encoder-decoder networks and have three pathways.
 > 1) Segmentation Branch - learns what is the brain tissue and to generate a brain mask 

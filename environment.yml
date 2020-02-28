@@ -20,4 +20,5 @@ dependencies:
         
  # source python36/bin/activate   
  # conda env create --file=environment.yml
+ # conda activate cnn_gpu_senthil
  # To have conda, you first need to install python 3.6, conda comes with python

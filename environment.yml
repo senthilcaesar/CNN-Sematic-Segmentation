@@ -18,6 +18,6 @@ dependencies:
         - gputil
         - git+https://github.com/pnlbwh/conversion.git
         
-        
+ # source python36/bin/activate   
  # conda env create --file=environment.yml
  # To have conda, you first need to install python 3.6, conda comes with python

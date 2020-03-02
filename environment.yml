@@ -1,4 +1,4 @@
-name: cnn_gpu_senthil
+name: cnn_gpu
 
 channels:
     - conda-forge
@@ -9,9 +9,10 @@ dependencies:
     - tensorflow-gpu==1.12.0
     - cudatoolkit==9.0
     - cudnn==7.6.0
-    - numpy==1.16.4
     - keras==2.2.4
-    - nibabel
+    - numpy==1.16.4
+    - nibabel==2.2.1
+    - scikit-image==0.16.2
     - ants
     - pip
     - pip:

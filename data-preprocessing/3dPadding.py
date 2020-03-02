@@ -1,5 +1,6 @@
 import nibabel as nib
 import numpy as np
+import os
 
 cases = '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/data/original/caselistNew.txt'
 

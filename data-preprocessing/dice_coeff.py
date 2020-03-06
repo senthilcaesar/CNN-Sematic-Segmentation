@@ -7,9 +7,13 @@ import tensorflow as tf
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # suppress TensorFlow logs
 
 
-cases = '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/data/test/caselist.txt'
-with open(cases) as f:
-    case_arr = f.read().splitlines()
+cases_truth = 'four.txt'
+with open(cases_truth) as f:
+    truth_arr = f.read().splitlines()
+
+cases_pred = 'three.txt'
+with open(cases_pred) as f:
+    pred_arr = f.read().splitlines()
 
 def dice_coef(y_true, y_pred, smooth=1.):
     y_true_f = K.flatten(y_true)
@@ -21,18 +25,23 @@ def dice_coef(y_true, y_pred, smooth=1.):
     return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
 
 
-for name in case_arr:
-	y_true = '/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/data/test/' + name + '/truth-pad.nii.gz'
-	img = nib.load(y_true)
-	true_mask = img.get_data().astype(np.float32)
-	y_pred = np.load('/rfanfs/pnl-zorro/home/sq566/pycharm/Suheyla/data/test/' + name + '/SO.npy')
+for i in range(0, len(truth_arr)):
+    y_true = truth_arr[i]
+    img_true = nib.load(y_true)
+    true_mask = img_true.get_data().astype(np.float32)
 
-	high_values_flags = true_mask > 1.0
-        true_mask[high_values_flags] = 1.0
+    y_pred = pred_arr[i]
+    img_pred = nib.load(y_pred)
+    pred_mask = img_pred.get_data().astype(np.float32)
+    
+    high_values_true = true_mask > 1.0
+    high_values_pred = pred_mask > 1.0
+    true_mask[high_values_true] = 1.0
+    pred_mask[high_values_pred] = 1.0
 
-	score = dice_coef(true_mask, y_pred)
-	# Construct a `Session` to execute the graph.
-	sess = tf.Session()
-	# Execute the graph and store the value that `e` represents in `result`.
-	result = sess.run(score)
-	print 'Dice score: ', result, ' subject: ', name #print y_pred[77][67][50], true_mask[77][67][50]
+    score = dice_coef(true_mask, pred_mask)
+    # Construct a `Session` to execute the graph.
+    sess = tf.Session()
+    # Execute the graph and store the value that `e` represents in `result`.
+    result = sess.run(score)
+    print('Dice score: ', result, ' subject: ', y_pred)

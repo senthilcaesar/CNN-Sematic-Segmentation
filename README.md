@@ -90,11 +90,18 @@ python dwi_masking.py -i cases.txt -f model_folder
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/home/pycharm/data/compnet/subject01/subject01_dwi.nii.gz
 
 ## Model Architecture
-The proposed networks are designed in the framework of encoder-decoder networks and have three pathways.
-> 1) Segmentation Branch - learns what is the brain tissue and to generate a brain mask 
-> 2) Complementary Branch - learns what is outside of the brain and to help the other
+The code is written by Raunak Dey available at 
+
+https://github.com/raun1/MICCAI2018---Complementary_Segmentation_Network-Raw-Code. 
+
+In summary, his proposed architecture is designed in the framework of encoder-decoder networks and have three pathways.
+
+* Segmentation Branch - learns what is the brain tissue and to generate a brain mask 
+
+* Complementary Branch - learns what is outside of the brain and to help the other
 branch generate brain mask
-> 3) Reconstruction Branch - It provides direct feedback to the segmentation and
+
+* Reconstruction Branch - It provides direct feedback to the segmentation and
 complementary branche and expects reasonable predictions from them as input to reconstruct the original input image.
 ![Screenshot](https://github.com/SenthilCaesar/CNN-Brain-MRI-Segmentation/blob/master/CompNet%20Arch.png)
 

@@ -1,0 +1,38 @@
+source /rfanfs/pnl-zorro/software/bashrc
+#source /mnt/data0/build/miniconda3/bin/activate
+
+# Tensor Flow python 2.7
+#source /rfanfs/pnl-zorro/home/suheyla/Tools/tensorflow-prebuiltin-pycharm/bin/activate
+
+# Tensor Flow Python 3.6
+#source /rfanfs/pnl-zorro/home/sq566/pycharm/brats/venv3/bin/activate
+
+# Conda Python 3.7
+#source /rfanfs/pnl-zorro/home/sq566/Downloads/conda/bin/activate
+
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-9.0/lib64:/rfanfs/pnl-zorro/home/sq566/brainsuite/runtimelib/v90/runtime/glnxa64:/rfanfs/pnl-zorro/home/sq566/brainsuite/runtimelib/v90/bin/glnxa64:/rfanfs/pnl-zorro/home/sq566/brainsuite/runtimelib/v90/sys/os/glnxa64:/home/sq566/.config/NA-MIC/Extensions-26813/SlicerDMRI/lib/Slicer-4.8/cli-modules
+
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/rfanfs/pnl-zorro/home/sq566/Downloads/conda/envs/caesar2.7/lib:/rfanfs/pnl-zorro/home/sq566/brainsuite/runtimelib/v90/runtime/glnxa64:/rfanfs/pnl-zorro/home/sq566/brainsuite/runtimelib/v90/bin/glnxa64:/rfanfs/pnl-zorro/home/sq566/brainsuite/runtimelib/v90/sys/os/glnxa64
+
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/rfanfs/pnl-zorro/home/sq566/Downloads/conda/lib:/rfanfs/pnl-zorro/home/sq566/brainsuite/runtimelib/v90/runtime/glnxa64:/rfanfs/pnl-zorro/home/sq566/brainsuite/runtimelib/v90/bin/glnxa64:/rfanfs/pnl-zorro/home/sq566/brainsuite/runtimelib/v90/sys/os/glnxa64
+
+alias charm='/rfanfs/pnl-zorro/home/suheyla/Tools/pycharm-community-2018.1.2/bin/pycharm.sh'
+alias python3='/rfanfs/pnl-zorro/home/sq566/Downloads/conda/bin/python'
+alias spyder='/rfanfs/pnl-zorro/home/sq566/Downloads/conda/bin/spyder'
+alias piper='ssh sq566@piper.nmr.mgh.harvard.edu'
+alias eris='ssh sq566@eris1n2.research.partners.org'
+alias niv='nvidia-smi -l 1'
+export PATH="/home/sq566/bin:$PATH"
+export VIMRUNTIME=/home/sq566/usr/local/share/vim/vim81/
+
+
+
+
+#source /rfanfs/pnl-zorro/home/sq566/Downloads/conda/etc/profile.d/conda.sh
+alias pnl='ssh sq566@pnl-oracle'
+alias suite='/rfanfs/pnl-zorro/home/sq566/brainsuite/BrainSuite19a/bin/BrainSuite19a'
+alias visa='/rfanfs/pnl-zorro/home/sq566/brainvisa/BrainVISA'
+alias home='cd /rfanfs/pnl-zorro/home/sq566'
+export PATH="/home/sq566/bin:$PATH"
+alias sublime='/rfanfs/pnl-zorro/home/sq566/sublime/sublime_text_3/sublime_text'
+alias chrome='/rfanfs/pnl-zorro/home/sq566/Downloads/chrome/opt/google/chrome/chrome --no-sandbox'

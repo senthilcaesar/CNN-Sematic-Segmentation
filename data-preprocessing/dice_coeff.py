@@ -7,11 +7,11 @@ import tensorflow as tf
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # suppress TensorFlow logs
 
 
-cases_truth = 'four.txt'
+cases_truth = 'b0.txt'
 with open(cases_truth) as f:
     truth_arr = f.read().splitlines()
 
-cases_pred = 'three.txt'
+cases_pred = 'b0_mask.txt'
 with open(cases_pred) as f:
     pred_arr = f.read().splitlines()
 
@@ -44,4 +44,4 @@ for i in range(0, len(truth_arr)):
     sess = tf.Session()
     # Execute the graph and store the value that `e` represents in `result`.
     result = sess.run(score)
-    print('Dice score: ', result, ' subject: ', y_pred)
+    print('Dice score: ', result)

@@ -1,17 +1,8 @@
-# CompNet - Keras Implementation
+Note!
 
-## Tool:CompNet: Segmenting diffusion brain MRI
+Please use the below latest version of our work.
 
-The code for training, as well as the Trained Models are provided here.
-The model is trained on 1500 b0 diffusion volumes.
-
-Let us know if you face any problems running the code by posting in Issues.
-
-If you use this code please cite:
-
-Raunak Dey, Yi Hong, C.2018 CompNet: Complementary Segmentation Network for Brain MRI Extraction . Accepted to MICCAI 2018 https://arxiv.org/abs/1804.00521
-
-Guha Roy, A., Conjeti, S., Navab, N., and Wachinger, C. 2018. QuickNAT: A Fully Convolutional Network for Quick and Accurate Segmentation of Neuroanatomy. Accepted for publication at NeuroImage, https://arxiv.org/abs/1801.04161
+https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation
 
 ## Getting Started
 

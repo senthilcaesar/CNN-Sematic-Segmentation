@@ -1,6 +1,6 @@
 ## Note!
 
-### Please use the below latest version of our work.
+### Please use the below latest version of this work.
 
 https://github.com/pnlbwh/CNN-Diffusion-MRIBrain-Segmentation
 

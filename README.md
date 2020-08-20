@@ -66,7 +66,7 @@ Download the following data and place them under `model_folder/` directory
 ```
 
 pip install gdown
-gdown --id 14C7-J4gKECjJhrAKCO68buM3FlAq3a3H --output trainedmodel.zip
+gdown --id 1V11Py33HXQEbEamETFp7P_nb4Y3tG_v_ --output trainedmodel.zip
 gdown https://www.nitrc.org/frs/download.php/11290/IITmean_b0_256.nii.gz
 mkdir model_folder
 mv trainedmodel.zip model_folder/
